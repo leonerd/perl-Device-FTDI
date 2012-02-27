@@ -1,5 +1,10 @@
 Revision history for Device-FTDI
 
+0.02 Mon Feb 27 2012 Pavel Shaydo <zwon@cpan.org>
+    * Add script to generate XS constants
+    * Check if libftdi is present when writing Makefile
+    * Add set_bitmode method
+
 0.01 Thu Feb 16 2012 Pavel Shaydo <zwon@cpan.org>
     * First version, released on an unsuspecting world.
 
