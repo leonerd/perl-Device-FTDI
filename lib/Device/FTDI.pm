@@ -137,6 +137,8 @@ sub new {
 Most of device methods return negative value in case of error. You can get
 error description using L</error_string> method.
 
+=cut
+
 =head2 $dev->error_string
 X<error_string>
 
@@ -146,6 +148,16 @@ Returns string describing error after last operation
 
 sub error_string {
     return _error_string( shift->{_ctx} );
+}
+
+=head2 $dev->reset
+
+Resets the device
+
+=cut
+
+sub reset {
+    return _reset(shift->{_ctx});
 }
 
 =head2 $dev->purge_rx_buffer

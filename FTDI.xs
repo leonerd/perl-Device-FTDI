@@ -167,6 +167,14 @@ dftdi_error_string(ftdi)
         RETVAL
 
 int
+dftdi_reset(ftdi)
+	struct ftdi_context *ftdi;
+    CODE:
+        RETVAL = ftdi_usb_reset(ftdi);
+    OUTPUT:
+        RETVAL
+
+int
 dftdi_purge_rx_buffer(ftdi)
 	struct ftdi_context *ftdi;
     CODE:
