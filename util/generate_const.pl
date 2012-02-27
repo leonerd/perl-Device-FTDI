@@ -23,6 +23,15 @@ my %const = (
     STOP_BIT_1 => "STOP_BIT_1",
     STOP_BIT_2 => "STOP_BIT_2",
     STOP_BIT_15 => "STOP_BIT_15",
+
+    BITMODE_RESET   => "BITMODE_RESET",
+    BITMODE_BITBANG => "BITMODE_BITBANG",
+    BITMODE_MPSSE   => "BITMODE_MPSSE",
+    BITMODE_SYNCBB  => "BITMODE_SYNCBB",
+    BITMODE_MCU     => "BITMODE_MCU",
+    BITMODE_OPTO    => "BITMODE_OPTO",
+    BITMODE_CBUS    => "BITMODE_CBUS",
+    BITMODE_SYNCFF  => "BITMODE_SYNCFF",
 );
 
 open my $fh, ">", "$FindBin::Bin/../const_xs.inc" or die $!;

@@ -324,3 +324,13 @@ dftdi_read_data(ftdi, buffer, size)
 	free(tmp);
     OUTPUT:
         RETVAL
+
+int
+dftdi_set_bitmode(ftdi, mask, mode)
+	struct ftdi_context *ftdi;
+	unsigned char mask;
+	unsigned char mode;
+    CODE:
+        RETVAL = ftdi_set_bitmode(ftdi, mask, mode);
+    OUTPUT:
+        RETVAL

@@ -359,6 +359,20 @@ sub read_data {
     return _read_data( $self->{_ctx}, $_[1], $size);
 }
 
+=head2 $dev->set_bitmode($mask, $mode)
+
+Enable/disable bitbang modes. I<$mask> -- bitmask to configure lines, High/ON
+value configures a line as output. I<$mode> may be one of the following:
+C<BITMODE_RESET>, C<BITMODE_BITBANG>, C<BITMODE_MPSSE>, C<BITMODE_SYNCBB>,
+C<BITMODE_MCU>, C<BITMODE_OPTO>, C<BITMODE_CBUS>, C<BITMODE_SYNCFF>.
+
+=cut
+
+sub set_bitmode {
+    my ($self, $mask, $mode) = @_;
+    return _set_bitmode($self->{_ctx}, $mask, $mode);
+}
+
 sub DESTROY {
     my $self = shift;
     _close_device($self->{_ctx});
