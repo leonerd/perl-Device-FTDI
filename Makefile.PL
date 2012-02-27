@@ -2,13 +2,26 @@ use 5.008;
 use strict;
 use warnings;
 use ExtUtils::MakeMaker;
+use ExtUtils::PkgConfig;
+
+# Check if we have libusb and libftdi installed
+my ( %lusb_cfg, %lftdi_cfg );
+eval {
+    %lusb_cfg  = ExtUtils::PkgConfig->find('libusb');
+    %lftdi_cfg = ExtUtils::PkgConfig->find('libftdi');
+};
+if ( my $err = $@ ) {
+    warn $err;
+    exit 0;
+}
 
 WriteMakefile(
     NAME          => 'Device::FTDI',
     AUTHOR        => q{Pavel Shaydo <zwon@cpan.org>},
     VERSION_FROM  => 'lib/Device/FTDI.pm',
     ABSTRACT_FROM => 'lib/Device/FTDI.pm',
-    LIBS          => ['-lusb -lftdi'],
+    INC           => "$lusb_cfg{cflags} $lftdi_cfg{cflags}",
+    LIBS          => [ "$lusb_cfg{libs} $lftdi_cfg{libs}" ],
     ( $ExtUtils::MakeMaker::VERSION >= 6.3002
         ? ( 'LICENSE' => 'perl' )
         : () ),
