@@ -1,5 +1,4 @@
 Changes
-const_xs.inc
 FTDI.xs
 lib/Device/FTDI.pm
 Makefile.PL
@@ -12,5 +11,6 @@ t/manifest.t
 t/pod-coverage.t
 t/pod.t
 typemap
+util/generate_const.pl
 META.yml                                 Module meta-data (added by MakeMaker)
 META.json                                Module JSON meta-data (added by MakeMaker)

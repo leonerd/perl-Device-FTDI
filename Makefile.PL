@@ -30,6 +30,7 @@ WriteMakefile(
     BUILD_REQUIRES => { 'Test::More' => 0.94, },
     dist           => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean      => { FILES => 'Device-FTDI-*' },
+    depend     => { 'FTDI.c' => 'const_xs.inc' },
     META_MERGE => {
         resources => {
             homepage   => 'https://github.com/trinitum/perl-Device-FTDI',
@@ -39,3 +40,11 @@ WriteMakefile(
         },
     },
 );
+
+sub MY::postamble {
+    return <<CONST;
+const_xs.inc : util/generate_const.pl
+\t$^X util/generate_const.pl
+
+CONST
+}
