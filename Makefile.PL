@@ -21,15 +21,16 @@ WriteMakefile(
     VERSION_FROM  => 'lib/Device/FTDI.pm',
     ABSTRACT_FROM => 'lib/Device/FTDI.pm',
     INC           => "$lusb_cfg{cflags} $lftdi_cfg{cflags}",
-    LIBS          => [ "$lusb_cfg{libs} $lftdi_cfg{libs}" ],
+    LIBS          => ["$lusb_cfg{libs} $lftdi_cfg{libs}"],
     ( $ExtUtils::MakeMaker::VERSION >= 6.3002
         ? ( 'LICENSE' => 'perl' )
         : () ),
-    PL_FILES       => {},
-    PREREQ_PM      => { 'Test::More' => 0, },
-    BUILD_REQUIRES => { 'Test::More' => 0.94, },
-    dist           => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
-    clean      => { FILES => 'Device-FTDI-*' },
+    PL_FILES           => {},
+    PREREQ_PM          => { 'Test::More' => 0, },
+    CONFIGURE_REQUIRES => { 'ExtUtils::PkgConfig' => 0, },
+    BUILD_REQUIRES     => { 'Test::More' => 0.94, },
+    dist               => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
+    clean      => { FILES    => 'Device-FTDI-*' },
     depend     => { 'FTDI.c' => 'const_xs.inc' },
     META_MERGE => {
         resources => {
