@@ -40,6 +40,12 @@ our @EXPORT_OK = qw(
 
     BREAK_ON
     BREAK_OFF
+
+    INTERFACE_ANY
+    INTERFACE_A
+    INTERFACE_B
+    INTERFACE_C
+    INTERFACE_D
 );
 
 our %EXPORT_TAGS = (all => \@EXPORT_OK);
@@ -158,6 +164,17 @@ Resets the device
 
 sub reset {
     return _reset(shift->{_ctx});
+}
+
+=head2 set_interface($interface)
+
+Open selected channels on a chip, otherwise use first channel. I<$interface> may be one of:
+C<INTERFACE_A>, C<INTERFACE_B>, C<INTERFACE_C>, C<INTERFACE_D>, or C<INTERFACE_ANY>.
+
+=cut
+
+sub set_interface {
+    return _set_interface(shift->{_ctx});
 }
 
 =head2 $dev->purge_rx_buffer

@@ -152,6 +152,15 @@ dftdi_open_device(vendor, product, description, serial, index)
     OUTPUT:
         RETVAL
 
+int
+dftdi_set_interface(ftdi, interface)
+	struct ftdi_context *ftdi;
+	int interface;
+    CODE:
+        RETVAL = ftdi_set_interface(ftdi, interface);
+    OUTPUT:
+        RETVAL
+
 void
 dftdi_close_device(ftdi)
 	struct ftdi_context *ftdi;
