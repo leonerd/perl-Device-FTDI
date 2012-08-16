@@ -1,5 +1,8 @@
 Revision history for Device-FTDI
 
+0.04 Thu Aug 16 2012 Pavel Shaydo <zwon@cpan.org>
+    * Add set_interface method
+
 0.03 Wed Feb 29 2012 Pavel Shaydo <zwon@cpan.org>
     * Fix configure dependencies
 
