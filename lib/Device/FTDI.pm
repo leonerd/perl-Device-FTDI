@@ -174,7 +174,8 @@ C<INTERFACE_A>, C<INTERFACE_B>, C<INTERFACE_C>, C<INTERFACE_D>, or C<INTERFACE_A
 =cut
 
 sub set_interface {
-    return _set_interface(shift->{_ctx});
+    my ( $self, $interface ) = @_;
+    return _set_interface( $self->{_ctx}, $interface );
 }
 
 =head2 $dev->purge_rx_buffer
