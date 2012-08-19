@@ -1,5 +1,9 @@
 Revision history for Device-FTDI
 
+0.05 Sun Aug 19 2012 Pavel Shaydo <zwon@cpan.org>
+    * Pass interface parameter to _set_interface,
+      thanks to paxospaxos for the patch
+
 0.04 Thu Aug 16 2012 Pavel Shaydo <zwon@cpan.org>
     * Add set_interface method
 
