@@ -1,20 +1,23 @@
 Revision history for Device-FTDI
 
+0.06 Sun Nov  1 2015 Pavel Shaydo <zwon@cpan.org>
+    - export BITMODE_* constants (Paul "LeoNerd" Evans, see #3, #4)
+
 0.05 Sun Aug 19 2012 Pavel Shaydo <zwon@cpan.org>
-    * Pass interface parameter to _set_interface,
+    - Pass interface parameter to _set_interface,
       thanks to paxospaxos for the patch
 
 0.04 Thu Aug 16 2012 Pavel Shaydo <zwon@cpan.org>
-    * Add set_interface method
+    - Add set_interface method
 
 0.03 Wed Feb 29 2012 Pavel Shaydo <zwon@cpan.org>
-    * Fix configure dependencies
+    - Fix configure dependencies
 
 0.02 Mon Feb 27 2012 Pavel Shaydo <zwon@cpan.org>
-    * Add script to generate XS constants
-    * Check if libftdi is present when writing Makefile
-    * Add set_bitmode method
+    - Add script to generate XS constants
+    - Check if libftdi is present when writing Makefile
+    - Add set_bitmode method
 
 0.01 Thu Feb 16 2012 Pavel Shaydo <zwon@cpan.org>
-    * First version, released on an unsuspecting world.
+    - First version, released on an unsuspecting world.
 

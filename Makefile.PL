@@ -39,6 +39,10 @@ WriteMakefile(
             repository => 'git://github.com/trinitum/perl-Device-FTDI',
             license    => 'http://dev.perl.org/licenses/',
         },
+        x_contributors => [
+            'Pavel Shaydo <zwon@cpan.org>',
+            'Paul "LeoNerd" Evans <leonerd@leonerd.org.uk>',
+        ],
     },
 );
 

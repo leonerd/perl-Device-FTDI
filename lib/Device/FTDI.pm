@@ -10,11 +10,11 @@ Device::FTDI - perl extension to talk to FTDI chips
 
 =head1 VERSION
 
-Version 0.05
+Version 0.06
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 use Carp;
 
@@ -425,7 +425,7 @@ L<https://github.com/trinitum/perl-Device-FTDI/issues>.
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2012 Pavel Shaydo.
+Copyright 2012,2015 Pavel Shaydo.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of either: the GNU General Public License as published
