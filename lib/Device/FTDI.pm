@@ -175,7 +175,7 @@ sub reset {
     return _reset(shift->{_ctx});
 }
 
-=head2 set_interface($interface)
+=head2 $dev->set_interface($interface)
 
 Open selected channels on a chip, otherwise use first channel. I<$interface> may be one of:
 C<INTERFACE_A>, C<INTERFACE_B>, C<INTERFACE_C>, C<INTERFACE_D>, or C<INTERFACE_ANY>.
