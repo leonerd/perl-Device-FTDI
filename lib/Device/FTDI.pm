@@ -57,6 +57,24 @@ our @EXPORT_OK = qw(
     BITMODE_SYNCFF
 );
 
+# More constants
+my %USB_IDS;
+BEGIN {
+    %USB_IDS = (
+        VID_FTDI => 0x0403,
+
+        # https://usb-ids.gowdy.us/read/UD/0403 is useful
+        PID_FT232   => 0x6001,
+        PID_FT2232C => 0x6010,
+        PID_FT4232H => 0x6011,
+        PID_FT232H  => 0x6014,
+    );
+
+    require constant;
+    constant->import( \%USB_IDS );
+}
+push @EXPORT_OK, keys %USB_IDS;
+
 our %EXPORT_TAGS = (
     all => \@EXPORT_OK,
 
@@ -67,6 +85,9 @@ our %EXPORT_TAGS = (
     break     => [ grep { m/^BREAK_/     } @EXPORT_OK ],
     interface => [ grep { m/^INTERFACE_/ } @EXPORT_OK ],
     bitmode   => [ grep { m/^BITMODE_/   } @EXPORT_OK ],
+
+    vid => [ grep { m/^VID_/ } @EXPORT_OK ],
+    pid => [ grep { m/^PID_/ } @EXPORT_OK ],
 );
 
 require XSLoader;
@@ -113,8 +134,8 @@ product code. Default C<0x6001>.
 
 sub find_all {
     my ($class, %params) = @_;
-    $params{vendor} ||= 0x0403;
-    $params{product} ||= 0x6001;
+    $params{vendor}  ||= VID_FTDI;
+    $params{product} ||= PID_FT232;
     my @list = _find_all($params{vendor}, $params{product});
     return map { bless $_, 'Device::FTDI::Description' } @list;
 }
@@ -154,12 +175,25 @@ device index. By default 0.
 
 sub new {
     my ($class, %params) = @_;
-    $params{vendor} ||= 0x0403;
-    $params{product} ||= 0x6001;
+    $params{vendor}  ||= VID_FTDI;
+    $params{product} ||= PID_FT232;
     $params{index} ||= 0;
     my $dev = _open_device($params{vendor}, $params{product}, $params{description}, $params{serial}, $params{index});
     return bless { _ctx => $dev }, $class;
 }
+
+=pod
+
+In either case, the following constants may be used to specify C<vendor> or
+C<product>:
+
+    VID_FTDI
+
+(export tag C<:vid>)
+
+    PID_FT232, PID_FT2232C, PID_FT4232H, PID_FT232H
+
+(export tag C<:pid>)
 
 =head1 DEVICE METHODS
 
