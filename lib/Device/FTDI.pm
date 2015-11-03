@@ -14,7 +14,7 @@ Version 0.06
 
 =cut
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 use Carp;
 
