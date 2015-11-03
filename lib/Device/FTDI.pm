@@ -220,18 +220,22 @@ sub purge_buffers {
     return _purge_buffers(shift->{_ctx});
 }
 
-=head2 $dev->setflowctrl($flowctrl)
+=head2 $dev->set_flow_control($flowctrl)
 
 Set flow control for ftdi chip. Allowed values for I<$flowctrl> are:
 FLOW_RTS_CTS, FLOW_DTR_DSR, FLOW_XON_XOFF, FLOW_DISABLE.
 Returns 0 on success or negative error code otherwise.
 
+This method is also available aliased as C<setflowctrl> for back-compatibility
+and to match the name used by F<libftdi> itself.
+
 =cut
 
-sub setflowctrl {
+sub set_flow_control {
     my ( $self, $flowctrl ) = @_;
     return _setflowctrl( $self->{_ctx}, $flowctrl );
 }
+*setflowctrl = \&set_flow_control;
 
 =head2 $dev->set_line_property($bits, $stop_bit, $parity, $break)
 
