@@ -57,7 +57,17 @@ our @EXPORT_OK = qw(
     BITMODE_SYNCFF
 );
 
-our %EXPORT_TAGS = (all => \@EXPORT_OK);
+our %EXPORT_TAGS = (
+    all => \@EXPORT_OK,
+
+    flow      => [ grep { m/^FLOW_/      } @EXPORT_OK ],
+    bits      => [ grep { m/^BITS_/      } @EXPORT_OK ],
+    stop      => [ grep { m/^STOP_/      } @EXPORT_OK ],
+    parity    => [ grep { m/^PARITY_/    } @EXPORT_OK ],
+    break     => [ grep { m/^BREAK_/     } @EXPORT_OK ],
+    interface => [ grep { m/^INTERFACE_/ } @EXPORT_OK ],
+    bitmode   => [ grep { m/^BITMODE_/   } @EXPORT_OK ],
+);
 
 require XSLoader;
 XSLoader::load('Device::FTDI', $VERSION);
@@ -178,8 +188,11 @@ sub reset {
 =head2 $dev->set_interface($interface)
 
 Open selected channels on a chip, otherwise use first channel. I<$interface> may
-be one of: C<INTERFACE_A>, C<INTERFACE_B>, C<INTERFACE_C>, C<INTERFACE_D>, or
-C<INTERFACE_ANY>.
+be one of:
+
+    INTERFACE_A, INTERFACE_B, INTERFACE_C, INTERFACE_D, INTERFACE_ANY
+
+(export tag C<:interface>)
 
 =cut
 
@@ -224,7 +237,11 @@ sub purge_buffers {
 =head2 $dev->set_flow_control($flowctrl)
 
 Set flow control for ftdi chip. Allowed values for I<$flowctrl> are:
-FLOW_RTS_CTS, FLOW_DTR_DSR, FLOW_XON_XOFF, FLOW_DISABLE.
+
+    FLOW_RTS_CTS, FLOW_DTR_DSR, FLOW_XON_XOFF, FLOW_DISABLE
+
+(export tag C<:flow>)
+
 Returns 0 on success or negative error code otherwise.
 
 This method is also available aliased as C<setflowctrl> for back-compatibility
@@ -247,25 +264,32 @@ acceptable for parameters (* marks default value):
 
 =item B<$bits>
 
-C<BITS_7>, C<BITS_8> (*)
+    BITS_7, BITS_8 (*)
+
+(export tag C<:bits>)
 
 =item B<$stop_bit>
 
-C<STOP_BIT_1>, C<STOP_BIT_2>, C<STOP_BIT_15> (*)
+    STOP_BIT_1, STOP_BIT_2, STOP_BIT_15 (*)
+
+(export tag C<:stop>)
 
 =item B<$parity>
 
-C<PARITY_NONE> (*), C<PARITY_EVEN>, C<PARITY_ODD>, C<PARITY_MARK>,
-C<PARITY_SPACE>
+    PARITY_NONE (*), PARITY_EVEN, PARITY_ODD, PARITY_MARK, PARITY_SPACE
+
+(export tag C<:parity>)
 
 =item B<$parity>
 
-C<BREAK_OFF> (*), C<BREAK_ON>
+    BREAK_OFF (*), BREAK_ON
+
+(export tag C<:break>)
 
 =back
 
-Note, that you have to import constants you need. You can import all constants
-using C<:all> tag.
+Note that you have to import constants you need. You can import all constants
+using C<:all> tag, or individual groups using the other named tags.
 
 Returns 0 on success or negative error code otherwise.
 
@@ -395,8 +419,11 @@ sub read_data {
 
 Enable/disable bitbang modes. I<$mask> -- bitmask to configure lines, High/ON
 value configures a line as output. I<$mode> may be one of the following:
-C<BITMODE_RESET>, C<BITMODE_BITBANG>, C<BITMODE_MPSSE>, C<BITMODE_SYNCBB>,
-C<BITMODE_MCU>, C<BITMODE_OPTO>, C<BITMODE_CBUS>, C<BITMODE_SYNCFF>.
+
+    BITMODE_RESET, BITMODE_BITBANG, BITMODE_MPSSE, BITMODE_SYNCBB,
+    BITMODE_MCU, BITMODE_OPTO, BITMODE_CBUS, BITMODE_SYNCFF.
+
+(export tag C<:bitmode>)
 
 =cut
 
