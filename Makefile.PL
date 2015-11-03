@@ -19,7 +19,7 @@ WriteMakefile(
     NAME          => 'Device::FTDI',
     AUTHOR        => 'Paul "LeoNerd" Evans <leonerd@leonerd.org.uk>',
     VERSION_FROM  => 'lib/Device/FTDI.pm',
-    ABSTRACT_FROM => 'lib/Device/FTDI.pm',
+    ABSTRACT      => 'use USB-attached serial interface chips from FTDI',
     INC           => "$lusb_cfg{cflags} $lftdi_cfg{cflags}",
     LIBS          => ["$lusb_cfg{libs} $lftdi_cfg{libs}"],
     ( $ExtUtils::MakeMaker::VERSION >= 6.3002

@@ -6,7 +6,7 @@ use warnings;
 
 =head1 NAME
 
-Device::FTDI - perl extension to talk to F<FTDI> chips
+C<Device::FTDI> - use USB-attached serial interface chips from I<FTDI>.
 
 =head1 VERSION
 
@@ -74,7 +74,7 @@ XSLoader::load('Device::FTDI', $VERSION);
 B<WARNING:> this is an alpha version
 
 This is Perl bindings to F<libftdi> library. It allows you to communicate with
-F<FTDI> chips supported by this library.
+I<FTDI> chips supported by this library.
 
 =head1 CLASS METHODS
 
@@ -294,7 +294,7 @@ sub set_baudrate {
 
 =head2 $dev->set_latency_timer($latency)
 
-Sets latency timer. The FTDI chip keeps data in the internal buffer for a
+Sets latency timer. The I<FTDI> chip keeps data in the internal buffer for a
 specific amount of time if the buffer is not full yet to decrease load on the
 USB bus. Latency must be between 1 and 255.
 
