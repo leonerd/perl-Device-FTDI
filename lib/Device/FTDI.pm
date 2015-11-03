@@ -90,7 +90,9 @@ I<FTDI> chips supported by this library.
 
 =cut
 
-=head2 $class->find_all(%params)
+=head2 find_all
+
+    $class->find_all(%params)
 
 Finds all connected devices with specified vendor and product codes. Returns
 list of hashes describing devices. Following parameters are accepted:
@@ -117,7 +119,9 @@ sub find_all {
     return map { bless $_, 'Device::FTDI::Description' } @list;
 }
 
-=head2 $class->new(%params)
+=head2 new
+
+    $class->new(%params)
 
 Opens specified device and returns the corresponding object reference. Dies if
 an attempt to open the device has failed. Accepts following parameters:
@@ -164,8 +168,9 @@ error description using L</error_string> method.
 
 =cut
 
-=head2 $dev->error_string
-X<error_string>
+=head2 error_string
+
+    $dev->error_string
 
 Returns string describing error after last operation
 
@@ -175,7 +180,9 @@ sub error_string {
     return _error_string( shift->{_ctx} );
 }
 
-=head2 $dev->reset
+=head2 reset
+
+    $dev->reset
 
 Resets the device
 
@@ -185,7 +192,9 @@ sub reset {
     return _reset(shift->{_ctx});
 }
 
-=head2 $dev->set_interface($interface)
+=head2 set_interface
+
+    $dev->set_interface($interface)
 
 Open selected channels on a chip, otherwise use first channel. I<$interface> may
 be one of:
@@ -201,7 +210,9 @@ sub set_interface {
     return _set_interface( $self->{_ctx}, $interface );
 }
 
-=head2 $dev->purge_rx_buffer
+=head2 purge_rx_buffer
+
+    $dev->purge_rx_buffer
 
 Clears the read buffer on the chip and the internal read buffer. Returns 0 on
 success or negative error code otherwise.
@@ -212,7 +223,9 @@ sub purge_rx_buffer {
     return _purge_rx_buffer(shift->{_ctx});
 }
 
-=head2 $dev->purge_tx_buffer
+=head2 purge_tx_buffer
+
+    $dev->purge_tx_buffer
 
 Clears the write buffer on the chip. Returns 0 on success or negative error
 code otherwise.
@@ -223,7 +236,9 @@ sub purge_tx_buffer {
     return _purge_tx_buffer(shift->{_ctx});
 }
 
-=head2 $dev->purge_buffers
+=head2 purge_buffers
+
+    $dev->purge_buffers
 
 Clears the buffers on the chip and the internal read buffer. Returns 0 on
 success or negative error code otherwise.
@@ -234,7 +249,11 @@ sub purge_buffers {
     return _purge_buffers(shift->{_ctx});
 }
 
-=head2 $dev->set_flow_control($flowctrl)
+=head2 set_flow_control
+
+    $dev->set_flow_control($flowctrl)
+
+I<Since version 0.07>.
 
 Set flow control for ftdi chip. Allowed values for I<$flowctrl> are:
 
@@ -255,7 +274,9 @@ sub set_flow_control {
 }
 *setflowctrl = \&set_flow_control;
 
-=head2 $dev->set_line_property($bits, $stop_bit, $parity, $break)
+=head2 set_line_property
+
+    $dev->set_line_property($bits, $stop_bit, $parity, $break)
 
 Sets line characteristics. Last parameters may be ommited. Following values are
 acceptable for parameters (* marks default value):
@@ -305,7 +326,9 @@ sub set_line_property {
     return _set_line_property2( $self->{_ctx}, $bits, $stop_bit, $parity, $break );
 }
 
-=head2 $dev->set_baudrate($baudrate)
+=head2 set_baudrate
+
+    $dev->set_baudrate($baudrate)
 
 Sets the chip baudrate. Returns 0 on success or negative error code otherwise.
 
@@ -316,7 +339,9 @@ sub set_baudrate {
     return _set_baudrate($self->{_ctx}, $baudrate);
 }
 
-=head2 $dev->set_latency_timer($latency)
+=head2 set_latency_timer
+
+    $dev->set_latency_timer($latency)
 
 Sets latency timer. The I<FTDI> chip keeps data in the internal buffer for a
 specific amount of time if the buffer is not full yet to decrease load on the
@@ -332,7 +357,9 @@ sub set_latency_timer {
     return _set_latency_timer( $self->{_ctx}, $latency );
 }
 
-=head2 $dev->get_latency_timer
+=head2 get_latency_timer
+
+    $dev->get_latency_timer
 
 Returns latency timer value or negative error code.
 
@@ -342,7 +369,9 @@ sub get_latency_timer {
     return _get_latency_timer( shift->{_ctx} );
 }
 
-=head2 $dev->write_data_set_chunksize($chunksize)
+=head2 write_data_set_chunksize
+
+    $dev->write_data_set_chunksize($chunksize)
 
 Sets write buffer chunk size. Default C<4096>. Returns 0 on success or
 negative error code otherwise.
@@ -354,7 +383,9 @@ sub write_data_set_chunksize {
     return _write_data_set_chunksize( $self->{_ctx}, $chunksize );
 }
 
-=head2 $dev->write_data_get_chunksize
+=head2 write_data_get_chunksize
+
+    $dev->write_data_get_chunksize
 
 Returns write buffer chunk size or negative error code.
 
@@ -364,7 +395,9 @@ sub write_data_get_chunksize {
     return _write_data_get_chunksize( shift->{_ctx} );
 }
 
-=head2 $dev->read_data_set_chunksize($chunksize)
+=head2 read_data_set_chunksize
+
+    $dev->read_data_set_chunksize($chunksize)
 
 Sets read buffer chunk size. Default 4096. Returns 0 on success or negative
 error code otherwise.
@@ -376,7 +409,9 @@ sub read_data_set_chunksize {
     return _read_data_set_chunksize( $self->{_ctx}, $chunksize );
 }
 
-=head2 $dev->read_data_get_chunksize
+=head2 read_data_get_chunksize
+
+    $dev->read_data_get_chunksize
 
 Returns read buffer chunk size or negative error code.
 
@@ -386,7 +421,9 @@ sub read_data_get_chunksize {
     return _read_data_get_chunksize( shift->{_ctx} );
 }
 
-=head2 $dev->write_data($data)
+=head2 write_data
+
+    $dev->write_data($data)
 
 Writes data to the chip in chunks. Returns number of bytes written on success
 or negative error code otherwise.
@@ -398,7 +435,9 @@ sub write_data {
     return _write_data( $self->{_ctx}, $data );
 }
 
-=head2 $dev->read_data($buffer, $size)
+=head2 read_data
+
+    $dev->read_data($buffer, $size)
 
 Reads data from the chip (up to I<$size> bytes) and stores it in I<$buffer>.
 Returns when at least one byte is available or when the latency timer has
@@ -415,7 +454,9 @@ sub read_data {
     return _read_data( $self->{_ctx}, $_[1], $size);
 }
 
-=head2 $dev->set_bitmode($mask, $mode)
+=head2 set_bitmode
+
+    $dev->set_bitmode($mask, $mode)
 
 Enable/disable bitbang modes. I<$mask> -- bitmask to configure lines, High/ON
 value configures a line as output. I<$mode> may be one of the following:
