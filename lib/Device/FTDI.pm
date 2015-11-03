@@ -6,7 +6,7 @@ use warnings;
 
 =head1 NAME
 
-Device::FTDI - perl extension to talk to FTDI chips
+Device::FTDI - perl extension to talk to F<FTDI> chips
 
 =head1 VERSION
 
@@ -73,8 +73,8 @@ XSLoader::load('Device::FTDI', $VERSION);
 
 B<WARNING:> this is an alpha version
 
-This is Perl bindings to libftdi library. It allows you to communicate with
-FTDI chips supported by this library.
+This is Perl bindings to F<libftdi> library. It allows you to communicate with
+F<FTDI> chips supported by this library.
 
 =head1 CLASS METHODS
 
@@ -89,11 +89,11 @@ list of hashes describing devices. Following parameters are accepted:
 
 =item B<vendor>
 
-vendor code. Default 0x0403.
+vendor code. Default C<0x0403>.
 
 =item B<product>
 
-product code. Default 0x6001.
+product code. Default C<0x6001>.
 
 =back
 
@@ -109,18 +109,18 @@ sub find_all {
 
 =head2 $class->new(%params)
 
-Opens specified device and returns the corresponding object refference. Dies if
+Opens specified device and returns the corresponding object reference. Dies if
 an attempt to open the device has failed. Accepts following parameters:
 
 =over 4
 
 =item B<vendor>
 
-vendor code. Default 0x0403.
+vendor code. Default C<0x0403>.
 
 =item B<product>
 
-product code. Default 0x6001.
+product code. Default C<0x6001>.
 
 =item B<description>
 
@@ -177,8 +177,9 @@ sub reset {
 
 =head2 $dev->set_interface($interface)
 
-Open selected channels on a chip, otherwise use first channel. I<$interface> may be one of:
-C<INTERFACE_A>, C<INTERFACE_B>, C<INTERFACE_C>, C<INTERFACE_D>, or C<INTERFACE_ANY>.
+Open selected channels on a chip, otherwise use first channel. I<$interface> may
+be one of: C<INTERFACE_A>, C<INTERFACE_B>, C<INTERFACE_C>, C<INTERFACE_D>, or
+C<INTERFACE_ANY>.
 
 =cut
 
@@ -189,8 +190,8 @@ sub set_interface {
 
 =head2 $dev->purge_rx_buffer
 
-Clears the read buffer on the chip and the internal read buffer.
-Returns 0 on success or negative error code otherwise.
+Clears the read buffer on the chip and the internal read buffer. Returns 0 on
+success or negative error code otherwise.
 
 =cut
 
@@ -200,8 +201,8 @@ sub purge_rx_buffer {
 
 =head2 $dev->purge_tx_buffer
 
-Clears the write buffer on the chip.
-Returns 0 on success or negative error code otherwise.
+Clears the write buffer on the chip. Returns 0 on success or negative error
+code otherwise.
 
 =cut
 
@@ -211,8 +212,8 @@ sub purge_tx_buffer {
 
 =head2 $dev->purge_buffers
 
-Clears the buffers on the chip and the internal read buffer.
-Returns 0 on success or negative error code otherwise.
+Clears the buffers on the chip and the internal read buffer. Returns 0 on
+success or negative error code otherwise.
 
 =cut
 
@@ -254,7 +255,8 @@ C<STOP_BIT_1>, C<STOP_BIT_2>, C<STOP_BIT_15> (*)
 
 =item B<$parity>
 
-C<PARITY_NONE> (*), C<PARITY_EVEN>, C<PARITY_ODD>, C<PARITY_MARK>, C<PARITY_SPACE>
+C<PARITY_NONE> (*), C<PARITY_EVEN>, C<PARITY_ODD>, C<PARITY_MARK>,
+C<PARITY_SPACE>
 
 =item B<$parity>
 
@@ -281,8 +283,7 @@ sub set_line_property {
 
 =head2 $dev->set_baudrate($baudrate)
 
-Sets the chip baudrate.
-Returns 0 on success or negative error code otherwise.
+Sets the chip baudrate. Returns 0 on success or negative error code otherwise.
 
 =cut
 
@@ -295,7 +296,7 @@ sub set_baudrate {
 
 Sets latency timer. The FTDI chip keeps data in the internal buffer for a
 specific amount of time if the buffer is not full yet to decrease load on the
-usb bus. Latency must be between 1 and 255.
+USB bus. Latency must be between 1 and 255.
 
 Returns 0 on success or negative error code otherwise.
 
@@ -319,8 +320,8 @@ sub get_latency_timer {
 
 =head2 $dev->write_data_set_chunksize($chunksize)
 
-Sets write buffer chunk size. Default 4096.
-Returns 0 on success or negative error code otherwise.
+Sets write buffer chunk size. Default C<4096>. Returns 0 on success or
+negative error code otherwise.
 
 =cut
 
@@ -341,8 +342,8 @@ sub write_data_get_chunksize {
 
 =head2 $dev->read_data_set_chunksize($chunksize)
 
-Sets read buffer chunk size. Default 4096.
-Returns 0 on success or negative error code otherwise.
+Sets read buffer chunk size. Default 4096. Returns 0 on success or negative
+error code otherwise.
 
 =cut
 
@@ -363,8 +364,8 @@ sub read_data_get_chunksize {
 
 =head2 $dev->write_data($data)
 
-Writes data to the chip in chunks.
-Returns number of bytes written on success or negative error code otherwise.
+Writes data to the chip in chunks. Returns number of bytes written on success
+or negative error code otherwise.
 
 =cut
 
