@@ -95,10 +95,15 @@ XSLoader::load('Device::FTDI', $VERSION);
 
 =head1 SYNOPSIS
 
-    use Device::FTDI;
+    use Device::FTDI qw( :bits :stop :parity :break :bitmode );
 
     my $dev = Device::FTDI->new();
-    ...
+    $dev->reset;
+
+    $dev->set_baudrate( 57600 );
+    $dev->set_line_property( BITS_8, STOP_BIT_1, PARITY_NONE, BREAK_OFF );
+
+    $dev->write_data( "Hello, world!\n" );
 
 =head1 DESCRIPTION
 
