@@ -317,7 +317,7 @@ sub set_flow_control {
 
     $dev->set_line_property($bits, $stop_bit, $parity, $break)
 
-Sets line characteristics. Last parameters may be ommited. Following values are
+Sets line characteristics. Last parameters may be omitted. Following values are
 acceptable for parameters (* marks default value):
 
 =over 4
