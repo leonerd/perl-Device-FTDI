@@ -17,7 +17,7 @@ if ( my $err = $@ ) {
 
 WriteMakefile(
     NAME          => 'Device::FTDI',
-    AUTHOR        => q{Pavel Shaydo <zwon@cpan.org>},
+    AUTHOR        => 'Paul "LeoNerd" Evans <leonerd@leonerd.org.uk>',
     VERSION_FROM  => 'lib/Device/FTDI.pm',
     ABSTRACT_FROM => 'lib/Device/FTDI.pm',
     INC           => "$lusb_cfg{cflags} $lftdi_cfg{cflags}",
@@ -34,9 +34,9 @@ WriteMakefile(
     depend     => { 'FTDI.c' => 'const_xs.inc' },
     META_MERGE => {
         resources => {
-            homepage   => 'https://github.com/trinitum/perl-Device-FTDI',
-            bugtracker => 'https://github.com/trinitum/perl-Device-FTDI/issues',
-            repository => 'git://github.com/trinitum/perl-Device-FTDI',
+            homepage   => 'https://github.com/leonerd/perl-Device-FTDI',
+            bugtracker => 'https://github.com/leonerd/perl-Device-FTDI/issues',
+            repository => 'git://github.com/leonerd/perl-Device-FTDI',
             license    => 'http://dev.perl.org/licenses/',
         },
         x_contributors => [

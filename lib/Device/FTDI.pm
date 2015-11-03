@@ -423,10 +423,12 @@ L<http://www.intra2net.com/en/developer/libftdi/>
 
 Pavel Shaydo, C<< <zwon at cpan.org> >>
 
+Maintained since 2015 by Paul Evans <leonerd@leonerd.org.uk>
+
 =head1 BUGS
 
 Please report any bugs or feature requests via GitHub bugtracker for this project:
-L<https://github.com/trinitum/perl-Device-FTDI/issues>.
+L<https://github.com/leonerd/perl-Device-FTDI/issues>.
 
 =head1 LICENSE AND COPYRIGHT
 
