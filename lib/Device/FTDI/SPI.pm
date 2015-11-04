@@ -90,4 +90,24 @@ sub write
     $self->write_gpio( DBUS, SPI_CS, SPI_CS );
 }
 
+=head2 $bytes = $spi->read( $len )->get
+
+=cut
+
+=head2 $bytes_out = $spi->readwrite( $bytes_in )->get;
+
+=cut
+
+sub readwrite
+{
+    my $self = shift;
+    my ( $bytes ) = @_;
+
+    $self->write_gpio( DBUS, 0, SPI_CS );
+    my $f = $self->readwrite_bytes( $bytes );
+    $self->write_gpio( DBUS, SPI_CS, SPI_CS );
+
+    return $f;
+}
+
 0x55AA;

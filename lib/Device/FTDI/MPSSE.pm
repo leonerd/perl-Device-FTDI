@@ -174,8 +174,10 @@ sub _readwrite_bytes
     $data = substr( $data, 0, $len );
     $data .= "\0" x ( $len - length $data );
 
-    die "Read not yet supported" if $cmd & CMD_READ;
-    $self->_send_bytes( pack( "C v", $cmd, $len - 1 ) . ( $cmd & CMD_WRITE ? $data : "" ) );
+    my $f = $self->_send_bytes( pack( "C v", $cmd, $len - 1 ) . ( $cmd & CMD_WRITE ? $data : "" ) );
+    $f = $self->_recv_bytes( $len ) if $cmd & CMD_READ;
+
+    return $f;
 }
 
 sub write_bytes
