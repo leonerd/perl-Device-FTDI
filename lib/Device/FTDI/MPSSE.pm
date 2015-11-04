@@ -196,7 +196,7 @@ sub readwrite_bytes
     $self->_readwrite_bytes( CMD_WRITE|CMD_READ, length $_[0], $_[0] );
 }
 
-=head2 $mpsse->tris_gpio( $port, $tris, $mask )->get
+=head2 $mpsse->tris_gpio( $port, $dir, $mask )->get
 
 =head2 $mpsse->write_gpio( $port, $val, $mask )->get
 
@@ -205,21 +205,23 @@ sub readwrite_bytes
 sub _mpsse_gpio_set
 {
     my $self = shift;
-    my ( $port, $val, $mask ) = @_;
+    my ( $port, $val, $dir ) = @_;
 
-    $self->_send_bytes( pack "C C C", CMD_SET_DBUS + ( $port * 2 ), $val, $mask );
+    $self->_send_bytes( pack "C C C", CMD_SET_DBUS + ( $port * 2 ), $val, $dir );
 }
+
+use constant { VAL => 0, DIR => 1 };
 
 sub tris_gpio
 {
     my $self = shift;
-    my ( $port, $tris, $mask ) = @_;
+    my ( $port, $dir, $mask ) = @_;
 
     my $state = $self->{mpsse_gpio}[$port];
 
-    ( $state->[1] &= ~$mask ) |= ( $tris & $mask );
+    ( $state->[1] &= ~$mask ) |= ( $dir & $mask );
 
-    $self->_mpsse_gpio_set( $port, $state->[0], $state->[1] );
+    $self->_mpsse_gpio_set( $port, $state->[VAL], $state->[DIR] );
 }
 
 sub write_gpio
@@ -231,7 +233,7 @@ sub write_gpio
 
     ( $state->[0] &= ~$mask ) |= ( $val & $mask );
 
-    $self->_mpsse_gpio_set( $port, $state->[0], $state->[1] );
+    $self->_mpsse_gpio_set( $port, $state->[VAL], $state->[DIR] );
 }
 
 =head2 $mpsse->set_loopback( $on )->get
