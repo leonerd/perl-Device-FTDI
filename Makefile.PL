@@ -26,7 +26,10 @@ WriteMakefile(
         ? ( 'LICENSE' => 'perl' )
         : () ),
     PL_FILES           => {},
-    PREREQ_PM          => { 'Test::More' => 0, },
+    PREREQ_PM          => {
+        'Future'           => 0,
+        'Test::More'       => 0,
+    },
     CONFIGURE_REQUIRES => { 'ExtUtils::PkgConfig' => 0, },
     BUILD_REQUIRES     => { 'Test::More' => 0.94, },
     dist               => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },

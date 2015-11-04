@@ -43,6 +43,8 @@ sub new
     $self->set_loopback( 0 );
     $self->set_open_collector( 0, 0 );
 
+    $self->{mpsse_writebuff} = "";
+
     $self->{mpsse_setup} = 0;
 
     $self->{mpsse_gpio}[DBUS] = [ 0, $tris ];
@@ -127,6 +129,8 @@ sub set_bit_order
 
     ( $self->{mpsse_setup} &= ~CMD_LSBFIRST )
                            |= ( $lsbfirst & CMD_LSBFIRST );
+
+    # TODO: Consider a token-effort Future->done for completeness?
 }
 
 =head2 $mpsse->set_clock_sense( $sense )
@@ -162,17 +166,15 @@ sub _readwrite_bytes
     $data = substr( $data, 0, $len );
     $data .= "\0" x ( $len - length $data );
 
-    $self->write_data( pack( "C v", $cmd, $len - 1 ) . ( $cmd & CMD_WRITE ? $data : "" ) );
-    $self->read_data( my $buf, $len ) if $cmd & CMD_READ;
-
-    return $buf;
+    die "Read not yet supported" if $cmd & CMD_READ;
+    $self->_push_bytes( pack( "C v", $cmd, $len - 1 ) . ( $cmd & CMD_WRITE ? $data : "" ) );
 }
 
-=head2 $mpsse->write_bytes( $data_out )
+=head2 $mpsse->write_bytes( $data_out )->get
 
-=head2 $data_in = $mpsse->read_bytes( $len )
+=head2 $data_in = $mpsse->read_bytes( $len )->get
 
-=head2 $data_in = $mpsse->readwrite_bytes( $data_out )
+=head2 $data_in = $mpsse->readwrite_bytes( $data_out )->get
 
 =cut
 
@@ -199,12 +201,12 @@ sub _mpsse_gpio_set
     my $self = shift;
     my ( $port, $val, $mask ) = @_;
 
-    $self->write_data( pack "C C C", CMD_SET_DBUS + ( $port * 2 ), $val, $mask );
+    $self->_push_bytes( pack "C C C", CMD_SET_DBUS + ( $port * 2 ), $val, $mask );
 }
 
-=head2 $mpsse->tris_gpio( $port, $tris, $mask )
+=head2 $mpsse->tris_gpio( $port, $tris, $mask )->get
 
-=head2 $mpsse->write_gpio( $port, $val, $mask )
+=head2 $mpsse->write_gpio( $port, $val, $mask )->get
 
 =cut
 
@@ -232,7 +234,7 @@ sub write_gpio
     $self->_mpsse_gpio_set( $port, $state->[0], $state->[1] );
 }
 
-=head2 $mpsse->set_loopback( $on )
+=head2 $mpsse->set_loopback( $on )->get
 
 =cut
 
@@ -241,10 +243,10 @@ sub set_loopback
     my $self = shift;
     my ( $on ) = @_;
 
-    $self->write_data( pack "C", $on ? CMD_LOOPBACK_ON : CMD_LOOPBACK_OFF );
+    $self->_push_bytes( pack "C", $on ? CMD_LOOPBACK_ON : CMD_LOOPBACK_OFF );
 }
 
-=head2 $mpsse->set_clock_divisor( $div )
+=head2 $mpsse->set_clock_divisor( $div )->get
 
 =cut
 
@@ -253,10 +255,10 @@ sub set_clock_divisor
     my $self = shift;
     my ( $div ) = @_;
 
-    $self->write_data( pack "C v", CMD_SET_CLOCK_DIVISOR, $div );
+    $self->_push_bytes( pack "C v", CMD_SET_CLOCK_DIVISOR, $div );
 }
 
-=head2 $mpsse->set_clkdiv5( $on )
+=head2 $mpsse->set_clkdiv5( $on )->get
 
 =cut
 
@@ -265,10 +267,10 @@ sub set_clkdiv5
     my $self = shift;
     my ( $on ) = @_;
 
-    $self->write_data( pack "C", $on ? CMD_CLKDIV5_ON : CMD_CLKDIV5_OFF );
+    $self->_push_bytes( pack "C", $on ? CMD_CLKDIV5_ON : CMD_CLKDIV5_OFF );
 }
 
-=head2 $mpsse->set_3phase_clock( $on )
+=head2 $mpsse->set_3phase_clock( $on )->get
 
 =cut
 
@@ -277,10 +279,10 @@ sub set_3phase_clock
     my $self = shift;
     my ( $on ) = @_;
 
-    $self->write_data( pack "C", $on ? CMD_3PHASECLK_ON : CMD_3PHASECLK_OFF );
+    $self->_push_bytes( pack "C", $on ? CMD_3PHASECLK_ON : CMD_3PHASECLK_OFF );
 }
 
-=head2 $mpsse->set_adaptive_clock( $on )
+=head2 $mpsse->set_adaptive_clock( $on )->get
 
 =cut
 
@@ -289,10 +291,10 @@ sub set_adaptive_clock
     my $self = shift;
     my ( $on ) = @_;
 
-    $self->write_data( pack "C", $on ? CMD_ADAPTIVE_CLOCK_ON : CMD_ADAPTIVE_CLOCK_OFF );
+    $self->_push_bytes( pack "C", $on ? CMD_ADAPTIVE_CLOCK_ON : CMD_ADAPTIVE_CLOCK_OFF );
 }
 
-=head2 $mpsse->set_open_collector( $dbus, $cbus )
+=head2 $mpsse->set_open_collector( $dbus, $cbus )->get
 
 =cut
 
@@ -301,7 +303,50 @@ sub set_open_collector
     my $self = shift;
     my ( $dbus, $cbus ) = @_;
 
-    $self->write_data( pack "C C C", CMD_SET_OPEN_COLLECTOR, $dbus, $cbus );
+    $self->_push_bytes( pack "C C C", CMD_SET_OPEN_COLLECTOR, $dbus, $cbus );
+}
+
+# Future/buffering support
+sub _push_bytes
+{
+    my $self = shift;
+    my ( $bytes ) = @_;
+
+    # TODO: bounds-check the buffer
+    $self->{mpsse_writebuff} .= $bytes;
+
+    my $f = Device::FTDI::MPSSE::_Future->new( $self );
+    push @{ $self->{mpsse_done_on_write} }, $f;
+    return $f;
+}
+
+package
+    Device::FTDI::MPSSE::_Future;
+use base qw( Future );
+
+sub new
+{
+    my $class = shift;
+    my ( $mpsse ) = @_;
+    my $self = $class->SUPER::new();
+
+    $self->{mpsse} = $mpsse;
+
+    return $self;
+}
+
+sub await
+{
+    my $self = shift;
+
+    my $mpsse = $self->{mpsse};
+
+    if( length $mpsse->{mpsse_writebuff} ) {
+        $mpsse->write_data( $mpsse->{mpsse_writebuff} );
+        $mpsse->{mpsse_writebuff} = "";
+
+        $_->done() for splice @{ $mpsse->{mpsse_done_on_write} };
+    }
 }
 
 0x55AA;
