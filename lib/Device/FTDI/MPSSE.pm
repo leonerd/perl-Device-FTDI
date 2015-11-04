@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use base qw( Device::FTDI );
 
-use constant PID_FT232H => 0x6014;
+use Device::FTDI qw( PID_FT232H );
 
 use Exporter 'import';
 
