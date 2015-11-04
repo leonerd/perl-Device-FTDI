@@ -9,12 +9,12 @@ use constant PID_FT232H => 0x6014;
 use Exporter 'import';
 
 our @EXPORT_OK = qw(
-    ADBUS ACBUS
+    DBUS CBUS
 );
 
 use constant {
-    ADBUS => 0,
-    ACBUS => 1,
+    DBUS => 0,
+    CBUS => 1,
 };
 
 sub new
@@ -31,7 +31,7 @@ sub new
 
     $self->purge_buffers;
 
-    # default tristate output on SCK/DO/TMS/ADBUS4..7
+    # default tristate output on SCK/DO/TMS/DBUS4..7
     #                  input on DI
     my $tris = 0xff & ~(1<<2);
 
@@ -45,11 +45,11 @@ sub new
 
     $self->{mpsse_setup} = 0;
 
-    $self->{mpsse_gpio}[ADBUS] = [ 0, $tris ];
-    $self->_mpsse_gpio_set( ADBUS, 0, $tris );
+    $self->{mpsse_gpio}[DBUS] = [ 0, $tris ];
+    $self->_mpsse_gpio_set( DBUS, 0, $tris );
 
-    $self->{mpsse_gpio}[ACBUS] = [ 0, 0xff ];
-    $self->_mpsse_gpio_set( ACBUS, 0, 0xff );
+    $self->{mpsse_gpio}[CBUS] = [ 0, 0xff ];
+    $self->_mpsse_gpio_set( CBUS, 0, 0xff );
 
     return $self;
 }
@@ -70,10 +70,10 @@ use constant {
     #              u16 bytes   u8 bits
     #              u8*$N data  u8 data   if WRITE/WRITE_TMS
 
-    CMD_SET_ADBUS => 0x80, # u8 value, u8 direction
-    CMD_SET_ACBUS => 0x82, # u8 value, u8 direction
-    CMD_GET_ADBUS => 0x81,
-    CMD_GET_ACBUS => 0x83,
+    CMD_SET_DBUS => 0x80, # u8 value, u8 direction
+    CMD_SET_CBUS => 0x82, # u8 value, u8 direction
+    CMD_GET_DBUS => 0x81,
+    CMD_GET_CBUS => 0x83,
 
     CMD_LOOPBACK_ON  => 0x84,
     CMD_LOOPBACK_OFF => 0x85,
@@ -105,7 +105,7 @@ use constant {
     CMD_NCLOCK_UNTIL_IO_HIGH => 0x9C, # u16 bytes
     CMD_NCLOCK_UNTIL_IO_LOW  => 0x9D, # u16 bytes
 
-    CMD_SET_OPEN_COLLECTOR => 0x9E, # u8 adbus, u8 acbus
+    CMD_SET_OPEN_COLLECTOR => 0x9E, # u8 dbus, u8 cbus
 };
 
 =head2 $mpsse->set_bit_order( $lsbfirst )
@@ -199,7 +199,7 @@ sub _mpsse_gpio_set
     my $self = shift;
     my ( $port, $val, $mask ) = @_;
 
-    $self->write_data( pack "C C C", CMD_SET_ADBUS + ( $port * 2 ), $val, $mask );
+    $self->write_data( pack "C C C", CMD_SET_DBUS + ( $port * 2 ), $val, $mask );
 }
 
 =head2 $mpsse->tris_gpio( $port, $tris, $mask )
@@ -292,16 +292,16 @@ sub set_adaptive_clock
     $self->write_data( pack "C", $on ? CMD_ADAPTIVE_CLOCK_ON : CMD_ADAPTIVE_CLOCK_OFF );
 }
 
-=head2 $mpsse->set_open_collector( $adbus, $acbus )
+=head2 $mpsse->set_open_collector( $dbus, $cbus )
 
 =cut
 
 sub set_open_collector
 {
     my $self = shift;
-    my ( $adbus, $acbus ) = @_;
+    my ( $dbus, $cbus ) = @_;
 
-    $self->write_data( pack "C C C", CMD_SET_OPEN_COLLECTOR, $adbus, $acbus );
+    $self->write_data( pack "C C C", CMD_SET_OPEN_COLLECTOR, $dbus, $cbus );
 }
 
 0x55AA;
