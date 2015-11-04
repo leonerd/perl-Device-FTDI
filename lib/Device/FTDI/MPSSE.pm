@@ -175,7 +175,7 @@ sub _readwrite_bytes
     $data .= "\0" x ( $len - length $data );
 
     die "Read not yet supported" if $cmd & CMD_READ;
-    $self->_push_bytes( pack( "C v", $cmd, $len - 1 ) . ( $cmd & CMD_WRITE ? $data : "" ) );
+    $self->_send_bytes( pack( "C v", $cmd, $len - 1 ) . ( $cmd & CMD_WRITE ? $data : "" ) );
 }
 
 sub write_bytes
@@ -207,7 +207,7 @@ sub _mpsse_gpio_set
     my $self = shift;
     my ( $port, $val, $mask ) = @_;
 
-    $self->_push_bytes( pack "C C C", CMD_SET_DBUS + ( $port * 2 ), $val, $mask );
+    $self->_send_bytes( pack "C C C", CMD_SET_DBUS + ( $port * 2 ), $val, $mask );
 }
 
 sub tris_gpio
@@ -243,7 +243,7 @@ sub set_loopback
     my $self = shift;
     my ( $on ) = @_;
 
-    $self->_push_bytes( pack "C", $on ? CMD_LOOPBACK_ON : CMD_LOOPBACK_OFF );
+    $self->_send_bytes( pack "C", $on ? CMD_LOOPBACK_ON : CMD_LOOPBACK_OFF );
 }
 
 =head2 $mpsse->set_clock_divisor( $div )->get
@@ -255,7 +255,7 @@ sub set_clock_divisor
     my $self = shift;
     my ( $div ) = @_;
 
-    $self->_push_bytes( pack "C v", CMD_SET_CLOCK_DIVISOR, $div );
+    $self->_send_bytes( pack "C v", CMD_SET_CLOCK_DIVISOR, $div );
 }
 
 =head2 $mpsse->set_clkdiv5( $on )->get
@@ -267,7 +267,7 @@ sub set_clkdiv5
     my $self = shift;
     my ( $on ) = @_;
 
-    $self->_push_bytes( pack "C", $on ? CMD_CLKDIV5_ON : CMD_CLKDIV5_OFF );
+    $self->_send_bytes( pack "C", $on ? CMD_CLKDIV5_ON : CMD_CLKDIV5_OFF );
 }
 
 =head2 $mpsse->set_3phase_clock( $on )->get
@@ -279,7 +279,7 @@ sub set_3phase_clock
     my $self = shift;
     my ( $on ) = @_;
 
-    $self->_push_bytes( pack "C", $on ? CMD_3PHASECLK_ON : CMD_3PHASECLK_OFF );
+    $self->_send_bytes( pack "C", $on ? CMD_3PHASECLK_ON : CMD_3PHASECLK_OFF );
 }
 
 =head2 $mpsse->set_adaptive_clock( $on )->get
@@ -291,7 +291,7 @@ sub set_adaptive_clock
     my $self = shift;
     my ( $on ) = @_;
 
-    $self->_push_bytes( pack "C", $on ? CMD_ADAPTIVE_CLOCK_ON : CMD_ADAPTIVE_CLOCK_OFF );
+    $self->_send_bytes( pack "C", $on ? CMD_ADAPTIVE_CLOCK_ON : CMD_ADAPTIVE_CLOCK_OFF );
 }
 
 =head2 $mpsse->set_open_collector( $dbus, $cbus )->get
@@ -303,11 +303,11 @@ sub set_open_collector
     my $self = shift;
     my ( $dbus, $cbus ) = @_;
 
-    $self->_push_bytes( pack "C C C", CMD_SET_OPEN_COLLECTOR, $dbus, $cbus );
+    $self->_send_bytes( pack "C C C", CMD_SET_OPEN_COLLECTOR, $dbus, $cbus );
 }
 
 # Future/buffering support
-sub _push_bytes
+sub _send_bytes
 {
     my $self = shift;
     my ( $bytes ) = @_;
