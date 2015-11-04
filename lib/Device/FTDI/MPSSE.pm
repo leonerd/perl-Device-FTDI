@@ -156,6 +156,14 @@ sub set_clock_sense
                            |= ( $sense & (CMD_CLK_ON_READ|CMD_CLK_ON_WRITE) );
 }
 
+=head2 $mpsse->write_bytes( $data_out )->get
+
+=head2 $data_in = $mpsse->read_bytes( $len )->get
+
+=head2 $data_in = $mpsse->readwrite_bytes( $data_out )->get
+
+=cut
+
 sub _readwrite_bytes
 {
     my $self = shift;
@@ -169,14 +177,6 @@ sub _readwrite_bytes
     die "Read not yet supported" if $cmd & CMD_READ;
     $self->_push_bytes( pack( "C v", $cmd, $len - 1 ) . ( $cmd & CMD_WRITE ? $data : "" ) );
 }
-
-=head2 $mpsse->write_bytes( $data_out )->get
-
-=head2 $data_in = $mpsse->read_bytes( $len )->get
-
-=head2 $data_in = $mpsse->readwrite_bytes( $data_out )->get
-
-=cut
 
 sub write_bytes
 {
@@ -196,6 +196,12 @@ sub readwrite_bytes
     $self->_readwrite_bytes( CMD_WRITE|CMD_READ, length $_[0], $_[0] );
 }
 
+=head2 $mpsse->tris_gpio( $port, $tris, $mask )->get
+
+=head2 $mpsse->write_gpio( $port, $val, $mask )->get
+
+=cut
+
 sub _mpsse_gpio_set
 {
     my $self = shift;
@@ -203,12 +209,6 @@ sub _mpsse_gpio_set
 
     $self->_push_bytes( pack "C C C", CMD_SET_DBUS + ( $port * 2 ), $val, $mask );
 }
-
-=head2 $mpsse->tris_gpio( $port, $tris, $mask )->get
-
-=head2 $mpsse->write_gpio( $port, $val, $mask )->get
-
-=cut
 
 sub tris_gpio
 {
