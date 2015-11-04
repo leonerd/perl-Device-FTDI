@@ -200,6 +200,8 @@ sub readwrite_bytes
 
 =head2 $mpsse->write_gpio( $port, $val, $mask )->get
 
+=head2 $val = $mpsse->read_gpio( $port )->get
+
 =cut
 
 sub _mpsse_gpio_set
@@ -234,6 +236,16 @@ sub write_gpio
     ( $state->[0] &= ~$mask ) |= ( $val & $mask );
 
     $self->_mpsse_gpio_set( $port, $state->[VAL], $state->[DIR] );
+}
+
+sub read_gpio
+{
+    my $self = shift;
+    my ( $port ) = @_;
+
+    $self->_send_bytes( pack "C", CMD_GET_DBUS + ( $port * 2 ) );
+    $self->_recv_bytes( 1 )
+        ->transform( done => sub { unpack "C", $_[0] } );
 }
 
 =head2 $mpsse->set_loopback( $on )->get
@@ -318,7 +330,19 @@ sub _send_bytes
     $self->{mpsse_writebuff} .= $bytes;
 
     my $f = Device::FTDI::MPSSE::_Future->new( $self );
-    push @{ $self->{mpsse_done_on_write} }, $f;
+    push @{ $self->{mpsse_send_f} }, $f;
+    return $f;
+}
+
+sub _recv_bytes
+{
+    my $self = shift;
+    my ( $len ) = @_;
+
+    my $f = Device::FTDI::MPSSE::_Future->new( $self );
+    push @{ $self->{mpsse_recv_f} }, [ $len, $f ];
+    $self->{mpsse_recv_len} += $len;
+
     return $f;
 }
 
@@ -326,13 +350,14 @@ package
     Device::FTDI::MPSSE::_Future;
 use base qw( Future );
 
+use constant CMD_SEND_IMMEDIATE => Device::FTDI::MPSSE::CMD_SEND_IMMEDIATE;
+
 sub new
 {
-    my $class = shift;
-    my ( $mpsse ) = @_;
-    my $self = $class->SUPER::new();
+    my $proto = shift;
+    my $self = $proto->SUPER::new();
 
-    $self->{mpsse} = $mpsse;
+    $self->{mpsse} = ref $proto ? $proto->{mpsse} : $_[0];
 
     return $self;
 }
@@ -343,11 +368,30 @@ sub await
 
     my $mpsse = $self->{mpsse};
 
+    if( $mpsse->{mpsse_recv_len} ) {
+        $mpsse->{mpsse_writebuff} .= pack "C", CMD_SEND_IMMEDIATE;
+    }
+
     if( length $mpsse->{mpsse_writebuff} ) {
         $mpsse->write_data( $mpsse->{mpsse_writebuff} );
         $mpsse->{mpsse_writebuff} = "";
 
-        $_->done() for splice @{ $mpsse->{mpsse_done_on_write} };
+        $_->done() for splice @{ $mpsse->{mpsse_send_f} };
+    }
+
+    my $recvbuff = "";
+    my $recv_f = $mpsse->{mpsse_recv_f};
+
+    while( $mpsse->{mpsse_recv_len} ) {
+        $mpsse->read_data( my $more, $mpsse->{mpsse_recv_len} );
+
+        $recvbuff .= $more;
+        $mpsse->{mpsse_recv_len} -= length $more;
+
+        while( @$recv_f and length $recvbuff >= $recv_f->[0][0] ) {
+            my ( $len, $f ) = @{ shift @$recv_f };
+            $f->done( substr $recvbuff, 0, $len, "" );
+        }
     }
 }
 
