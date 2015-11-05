@@ -143,6 +143,24 @@ sub write
     $self->write_gpio( DBUS, SPI_CS, SPI_CS );
 }
 
+=head2 read
+
+    $bytes = $spi->read( $len )->get;
+
+=cut
+
+sub read
+{
+    my $self = shift;
+    my ( $len ) = @_;
+
+    $self->write_gpio( DBUS, 0, SPI_CS );
+    my $f = $self->read_bytes( $len );
+    $self->write_gpio( DBUS, SPI_CS, SPI_CS );
+
+    return $f;
+}
+
 =head2
 
     $bytes_in = $spi->readwrite( $bytes_out )->get;
