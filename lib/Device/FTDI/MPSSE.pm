@@ -1,8 +1,49 @@
+#  You may distribute under the terms of either the GNU General Public License
+#  or the Artistic License (the same terms as Perl itself)
+#
+#  (C) Paul Evans, 2015 -- leonerd@leonerd.org.uk
+
 package Device::FTDI::MPSSE;
 
 use strict;
 use warnings;
 use base qw( Device::FTDI );
+
+=head1 NAME
+
+C<Device::FTDI::MPSSE> - use the MPSSE mode of an I<FDTI> chip
+
+=head1 DESCRIPTION
+
+This subclass of L<Device::FTDI> provides convenient methods to access the
+Multi-Protocol Synchronous Serial Engine (MPSSE) mode of certain I<FTDI>
+chips. It provides methods to wrap the various commands that control the
+MPSSE and interpret their responses.
+
+=head2 FUTURES AND BUFFERING
+
+Unlike most L<Future>-returning modules, it is not usually necessary to
+actually store the results of returned L<Future> instances from most of these
+methods. The C<$mpsse> object itself will store them.
+
+Especially in cases of C<set_*> or C<write_> methods, the caller is free
+to drop them in void context.
+
+You should, however, be aware of the deferred nature of the activities of
+these methods. The reason they return futures is that none of these methods
+really acts immediately on the chip. Instead, pending commands are stored
+internally in a buffer, and emitted at once to the chip over USB, where it can
+act on them all, and send all the responses at once. The reason to do this is
+to gain a much improved performance over the USB connection.
+
+Because of this, while it is not necessary to wait on or call L<Future/get> on
+every returned future, it I<is> required that the very last of a sequence of
+operations is waited on (usually by calling its C<get> method). When
+implementing library functions it is usually sufficient simply to let the last
+operation be returned in non-void context to the caller, so the caller can
+await it themself.
+
+=cut
 
 use Device::FTDI qw( PID_FT232H );
 
@@ -16,6 +57,22 @@ use constant {
     DBUS => 0,
     CBUS => 1,
 };
+
+=head1 CONSTRUCTOR
+
+=cut
+
+=head2 new
+
+    $mpsse = Device::FTDI::MPSSE->new( %args )
+
+Takes the same arguments as L<Device::FTDI/new>, except that it applies a
+default C<product> parameter of the product ID identifying the I<FT232H>
+device.
+
+This constructor performs all the necessary setup to initialse the MPSSE.
+
+=cut
 
 sub new
 {
@@ -110,7 +167,23 @@ use constant {
     CMD_SET_OPEN_COLLECTOR => 0x9E, # u8 dbus, u8 cbus
 };
 
-=head2 $mpsse->set_bit_order( $lsbfirst )
+=head2 METHODS
+
+Any of the following methods documented with a trailing C<< ->get >> call
+return L<Future> instances.
+
+=cut
+
+=head2 set_bit_order
+
+    $mpsse->set_bit_order( $lsbfirst )
+
+Configures the bit order of subsequent L</write_bytes> or L</readwrite_bytes>
+calls.
+
+Takes either of the following exported constants
+
+    MSBFIRST, LSBFIRST
 
 =cut
 
@@ -133,7 +206,17 @@ sub set_bit_order
     # TODO: Consider a token-effort Future->done for completeness?
 }
 
-=head2 $mpsse->set_clock_sense( $sense )
+=head2 set_clock_sense
+
+    $mpsse->set_clock_sense( $sense )
+
+Configures the clocking sense of subsequent read or write operations.
+
+I<$sense> should be a bitwise-or combination of one of each of the following
+two pairs of exported constants
+
+    RDCLOCK_FALLING, RDCLOCK_RISING
+    WRCLOCK_FALLING, WRCLOCK_RISING
 
 =cut
 
@@ -156,11 +239,28 @@ sub set_clock_sense
                            |= ( $sense & (CMD_CLK_ON_READ|CMD_CLK_ON_WRITE) );
 }
 
-=head2 $mpsse->write_bytes( $data_out )->get
+=head2 write_bytes
 
-=head2 $data_in = $mpsse->read_bytes( $len )->get
+=head2 read_bytes
 
-=head2 $data_in = $mpsse->readwrite_bytes( $data_out )->get
+=head2 readwrite_bytes
+
+    $mpsse->write_bytes( $data_out )->get
+
+    $data_in = $mpsse->read_bytes( $len )->get
+
+    $data_in = $mpsse->readwrite_bytes( $data_out )->get
+
+Perform a bytewise clocked serial transfer. These are the "main" methods of
+the class; they invoke the main core of the MPSSE.
+
+In each case, the C<CLK> pin will count the specified length of bytes of
+transfer. For the C<write_> and C<readwrite_> methods this count is implied by
+the length of the inbound buffer; during the operation the specified bytes
+will be sent out of the C<DO> pin.
+
+For the C<read_> and C<readwrite_> methods, the returned future will yield the
+bytes that were received in the C<DI> pin during this time.
 
 =cut
 
@@ -198,11 +298,37 @@ sub readwrite_bytes
     $self->_readwrite_bytes( CMD_WRITE|CMD_READ, length $_[0], $_[0] );
 }
 
-=head2 $mpsse->tris_gpio( $port, $dir, $mask )->get
+=head2 tris_gpio
 
-=head2 $mpsse->write_gpio( $port, $val, $mask )->get
+    $mpsse->tris_gpio( $port, $dir, $mask )->get
 
-=head2 $val = $mpsse->read_gpio( $port )->get
+"tristate" the pins on a GPIO port. This method affects only the pins
+specified by the C<$mask> bitmask, on the specified C<$port>. Pins whose
+corresponding bit in C<$dir> is 0 are set to inputs; whose bit is 1 are set
+to outputs. Pins not covered by the mask remain unaffected.
+
+=head2 write_gpio
+
+    $mpsse->write_gpio( $port, $val, $mask )->get
+
+Write a new value to the pins on a GPIO port. This method affects only the
+pins specified by the C<$mask> bitmask, on the specified port. Pins not
+covered by the mask remain unaffected. Additionally, any pins whose state has
+been written will additionally need to be set as outputs by the L</tris_gpio>
+method, either before or after this call.
+
+=head2 read_gpio
+
+    $val = $mpsse->read_gpio( $port )->get
+
+Reads the state of the pins on a GPIO port. The returned future will yield an
+8-bit integer. The state of any bits corresponding to pins currently
+configured as outputs (by the L</tris_gpio> method) is undefined.
+
+In each of the above methods, the GPIO port is specified by one of the
+following exported constants
+
+    DBUS, CBUS
 
 =cut
 
@@ -250,7 +376,13 @@ sub read_gpio
         ->transform( done => sub { unpack "C", $_[0] } );
 }
 
-=head2 $mpsse->set_loopback( $on )->get
+=head2 set_loopback
+
+    $mpsse->set_loopback( $on )->get
+
+If enabled, loopback mode bypasses the actual IO pins from the chip and
+connects the chip's internal output to its own input. This can be useful for
+testing whether the chip is mostly functioning correctly.
 
 =cut
 
@@ -262,7 +394,14 @@ sub set_loopback
     $self->_send_bytes( pack "C", $on ? CMD_LOOPBACK_ON : CMD_LOOPBACK_OFF );
 }
 
-=head2 $mpsse->set_clock_divisor( $div )->get
+=head2 set_clock_divisor
+
+    $mpsse->set_clock_divisor( $div )->get
+
+Sets the divider the chip uses to determine the output clock frequency. The
+eventual frequency will be
+
+    $freq_Hz = 12E6 / (( 1 + $div ) * 2
 
 =cut
 
@@ -274,7 +413,17 @@ sub set_clock_divisor
     $self->_send_bytes( pack "C v", CMD_SET_CLOCK_DIVISOR, $div );
 }
 
-=head2 $mpsse->set_clkdiv5( $on )->get
+=head2 set_clkdiv5
+
+    $mpsse->set_clkdiv5( $on )->get
+
+Disables or enables the divide-by-5 clock prescaler.
+
+Some I<FTDI> chips are capable of faster clock speeds. These chips use a base
+frequency of 60MHz rather than 12MHz, but divide it down by 5 by default to
+remain compatible with code unaware of this. To access the higher speeds
+available on these chips, disable the divider by using this method. The clock
+rate implied by C<set_clock_divisor> will then be 5 times faster.
 
 =cut
 
@@ -286,7 +435,13 @@ sub set_clkdiv5
     $self->_send_bytes( pack "C", $on ? CMD_CLKDIV5_ON : CMD_CLKDIV5_OFF );
 }
 
-=head2 $mpsse->set_3phase_clock( $on )->get
+=head2 set_3phase_clock
+
+    $mpsse->set_3phase_clock( $on )->get
+
+If enabled, data is clocked in/out using a 3-phase strategy compatible with
+the I2C protocol. If this is set, the effective clock rate becomes 2/3 that
+implied by the clock divider.
 
 =cut
 
@@ -298,7 +453,13 @@ sub set_3phase_clock
     $self->_send_bytes( pack "C", $on ? CMD_3PHASECLK_ON : CMD_3PHASECLK_OFF );
 }
 
-=head2 $mpsse->set_adaptive_clock( $on )->get
+=head2 set_adaptive_clock
+
+    $mpsse->set_adaptive_clock( $on )->get
+
+If enabled, the chip waits for acknowledgement of a clock signal on the
+C<GPIOL3> pin before continuing for every bit transferred. This may be used by
+I<ARM> processors.
 
 =cut
 
@@ -310,7 +471,15 @@ sub set_adaptive_clock
     $self->_send_bytes( pack "C", $on ? CMD_ADAPTIVE_CLOCK_ON : CMD_ADAPTIVE_CLOCK_OFF );
 }
 
-=head2 $mpsse->set_open_collector( $dbus, $cbus )->get
+=head2 set_open_collector
+
+    $mpsse->set_open_collector( $dbus, $cbus )->get
+
+I<Only on FT232H chips>.
+
+Enables open-collector mode on the output pins given by the bitmasks. This
+mode is useful to avoid bus drive contention, especially when implementing
+I2C.
 
 =cut
 
@@ -396,5 +565,11 @@ sub await
         }
     }
 }
+
+=head1 AUTHOR
+
+Paul Evans <leonerd@leonerd.org.uk>
+
+=cut
 
 0x55AA;
