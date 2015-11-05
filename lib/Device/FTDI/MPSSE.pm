@@ -20,6 +20,17 @@ Multi-Protocol Synchronous Serial Engine (MPSSE) mode of certain I<FTDI>
 chips. It provides methods to wrap the various commands that control the
 MPSSE and interpret their responses.
 
+The following subclasses exist to simplify implementation of particular
+serial protocols:
+
+=over 2
+
+=item *
+
+L<Device::FTDI::SPI> for SPI
+
+=back
+
 =head2 FUTURES AND BUFFERING
 
 Unlike most L<Future>-returning modules, it is not usually necessary to

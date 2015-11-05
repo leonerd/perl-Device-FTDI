@@ -505,6 +505,9 @@ value configures a line as output. I<$mode> may be one of the following:
 
 (export tag C<:bitmode>)
 
+To use the C<BITMODE_MPSSE> mode, you may prefer to use the
+L<Device::FTDI::MPSSE> subclass instead.
+
 =cut
 
 sub set_bitmode {
