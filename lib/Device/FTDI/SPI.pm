@@ -1,8 +1,26 @@
+#  You may distribute under the terms of either the GNU General Public License
+#  or the Artistic License (the same terms as Perl itself)
+#
+#  (C) Paul Evans, 2015 -- leonerd@leonerd.org.uk
+
 package Device::FTDI::SPI;
 
 use strict;
 use warnings;
 use base qw( Device::FTDI::MPSSE );
+
+=head1 NAME
+
+C<Device::FTDI::SPI> - use an I<FTDI> chip to talk the SPI protocol
+
+=cut
+
+=head1 DESCRIPTION
+
+This subclass of L<Device::FTDI::MPSSE> provides helpers around the basic
+MPSSE to fully implement the SPI protocol.
+
+=cut
 
 use Device::FTDI::MPSSE qw(
     WRCLOCK_FALLING WRCLOCK_RISING RDCLOCK_RISING RDCLOCK_FALLING
@@ -17,6 +35,27 @@ use constant {
     SPI_MISO => (1<<2),
     SPI_CS   => (1<<3),
 };
+
+=head1 CONSTRUCTOR
+
+=cut
+
+=head2 new
+
+    $spi = Device::FTDI::SPI->new( %args )
+
+In addition to the arguments taken by L<Device::FTDI::MPSSE/new>, this
+constructor also accepts:
+
+=over 4
+
+=item mode => INT
+
+The required SPI mode. Should be 0, 1, 2, or 3.
+
+=back
+
+=cut
 
 sub new
 {
@@ -36,7 +75,19 @@ sub new
     return $self;
 }
 
-=head2 $spi->set_spi_mode( $mode )->get
+=head1 METHODS
+
+Any of the following methods documented with a trailing C<< ->get >> call
+return L<Future> instances.
+
+=cut
+
+=head2 set_spi_mode
+
+    $spi->set_spi_mode( $mode )->get
+
+Sets the current SPI mode. This will affect the clock sense and the idle
+state of the C<CLK> pin.
 
 =cut
 
@@ -76,7 +127,9 @@ sub set_spi_mode
     $self->write_gpio( DBUS, $idle, SPI_SCK );
 }
 
-=head2 $spi->write( $bytes )->get
+=head2 write
+
+    $spi->write( $bytes )->get
 
 =cut
 
@@ -90,11 +143,12 @@ sub write
     $self->write_gpio( DBUS, SPI_CS, SPI_CS );
 }
 
-=head2 $bytes = $spi->read( $len )->get
+=head2
 
-=cut
+    $bytes_in = $spi->readwrite( $bytes_out )->get;
 
-=head2 $bytes_out = $spi->readwrite( $bytes_in )->get;
+Performs a full SPI write, or read-and-write operation, consisting of
+asserting the C<CS> pin, transferring bytes, and deasserting it again.
 
 =cut
 
@@ -109,5 +163,11 @@ sub readwrite
 
     return $f;
 }
+
+=head1 AUTHOR
+
+Paul Evans <leonerd@leonerd.org.uk>
+
+=cut
 
 0x55AA;
