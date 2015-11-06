@@ -9,6 +9,8 @@ use strict;
 use warnings;
 use base qw( Device::FTDI::MPSSE );
 
+our $VERSION = '0.07';
+
 =head1 NAME
 
 C<Device::FTDI::SPI> - use an I<FTDI> chip to talk the SPI protocol

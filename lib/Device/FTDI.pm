@@ -4,13 +4,13 @@ use 5.010;
 use strict;
 use warnings;
 
+our $VERSION = '0.07';
+
 =head1 NAME
 
 C<Device::FTDI> - use USB-attached serial interface chips from I<FTDI>.
 
 =cut
-
-our $VERSION = '0.07';
 
 use Carp;
 

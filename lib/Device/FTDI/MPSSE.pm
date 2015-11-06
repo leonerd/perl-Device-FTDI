@@ -9,6 +9,8 @@ use strict;
 use warnings;
 use base qw( Device::FTDI );
 
+our $VERSION = '0.07';
+
 =head1 NAME
 
 C<Device::FTDI::MPSSE> - use the MPSSE mode of an I<FDTI> chip
