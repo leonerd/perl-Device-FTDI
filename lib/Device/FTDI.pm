@@ -8,10 +8,6 @@ use warnings;
 
 C<Device::FTDI> - use USB-attached serial interface chips from I<FTDI>.
 
-=head1 VERSION
-
-Version 0.06
-
 =cut
 
 our $VERSION = '0.07';
