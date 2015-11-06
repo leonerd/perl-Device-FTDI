@@ -412,7 +412,7 @@ sub set_loopback
 Sets the divider the chip uses to determine the output clock frequency. The
 eventual frequency will be
 
-    $freq_Hz = 12E6 / (( 1 + $div ) * 2
+    $freq_Hz = 12E6 / (( 1 + $div ) * 2 )
 
 =cut
 
