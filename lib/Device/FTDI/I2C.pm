@@ -162,6 +162,20 @@ sub i2c_send
     return $f->transform( done => sub { $acks } );
 }
 
+use constant { WRITE => 0, READ => 1 };
+
+sub i2c_sendaddr
+{
+    my $self = shift;
+    my ( $addr, $rd ) = @_;
+
+    $self->write_bytes( pack "C", $rd | $addr << 1 );
+    # Release SDA
+    $self->write_gpio( DBUS, HIGH, I2C_SDA_OUT );
+
+    $self->read_bits( 1 );
+}
+
 sub i2c_recv
 {
     my $self = shift;
@@ -204,11 +218,8 @@ sub write
 
     $self->i2c_start;
 
-    $self->i2c_send( pack "C", $addr << 1 )
+    $self->i2c_sendaddr( $addr, WRITE )
     ->then( sub {
-        my ( $ack ) = @_;
-        # $ack or die "received ACK from device\n";
-
         $self->i2c_send( $data );
     })->then( sub {
         $self->i2c_stop;
@@ -238,18 +249,13 @@ sub write_then_read
 
     $self->i2c_start;
 
-    $self->i2c_send( pack "C", $addr << 1 )
+    $self->i2c_sendaddr( $addr, WRITE )
     ->then( sub {
-        my ( $ack ) = @_;
-
         $self->i2c_send( $data_out );
     })->then( sub {
         $self->i2c_repeated_start;
-
-        $self->i2c_send( pack "C", 1 | ( $addr << 1 ) );
+        $self->i2c_sendaddr( $addr, READ )
     })->then( sub {
-        my ( $ack ) = @_;
-
         $self->i2c_recv( $len_in );
     })->then( sub {
         my ( $data_in ) = @_;
