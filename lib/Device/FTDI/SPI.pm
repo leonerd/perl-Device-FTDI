@@ -57,6 +57,10 @@ constructor also accepts:
 
 The required SPI mode. Should be 0, 1, 2, or 3.
 
+=item clock_rate => INT
+
+Sets the initial value of the bit clock rate; as per L</set_clock_rate>.
+
 =back
 
 =cut
@@ -66,11 +70,11 @@ sub new
     my $class = shift;
     my %args = @_;
 
-    my $mode = delete $args{mode};
-
     my $self = $class->SUPER::new( %args );
 
-    $self->set_spi_mode( $mode ) if defined $mode;
+    $self->set_spi_mode( $args{mode} ) if defined $args{mode};
+
+    $self->set_clock_rate( $args{clock_rate} ) if defined $args{clock_rate};
 
     $self->set_open_collector( 0, 0 );
 

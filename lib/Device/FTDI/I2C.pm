@@ -49,20 +49,31 @@ use constant { HIGH => 0xff, LOW => 0 };
 
     $i2c = Device::FTDI::I2C->new( %args )
 
-This method takes no additional arguments beyond those taken by
-L<Device::FTDI::MPSSE/new>.
+In addition to the arguments taken by L<Device::FTDI::MPSSE/new>, this
+constructor also accepts:
+
+=over 4
+
+=item clock_rate => INT
+
+Sets the initial value of the bit clock rate; as per L</set_clock_rate>.
+
+=back
 
 =cut
 
 sub new
 {
     my $class = shift;
-    my $self = $class->SUPER::new( @_ );
+    my %args = @_;
+    my $self = $class->SUPER::new( %args );
 
     $self->set_3phase_clock( 1 );
     $self->set_open_collector( I2C_SCL|I2C_SDA_OUT, 0 );
 
     $self->set_clock_edges( CLOCK_RISING, CLOCK_FALLING );
+
+    $self->set_clock_rate( $args{clock_rate} ) if defined $args{clock_rate};
 
     # Idle high
     $self->write_gpio( DBUS, HIGH, I2C_SCL | I2C_SDA_OUT );

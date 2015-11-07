@@ -7,9 +7,10 @@ use Device::FTDI::SPI;
 
 use Time::HiRes qw( sleep );
 
-my $spi = Device::FTDI::SPI->new( mode => 0 );
-
-$spi->set_clock_rate( 1E6 );
+my $spi = Device::FTDI::SPI->new(
+    mode       => 0,
+    clock_rate => 1E6,
+);
 
 sub max7221_write_digit
 {
