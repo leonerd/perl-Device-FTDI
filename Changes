@@ -1,5 +1,10 @@
 Revision history for Device-FTDI
 
+0.08    2015/11/07 18:34:18
+        [CHANGES]
+         * Added Device::FTDI::MPSSE; helper subclass for using MPSSE bitmode
+         * Added Device::FTDI::SPI and ::I2C
+
 0.07    2015/11/03 23:11:48
         [CHANGES]
          * Provide USB vendor/product ID constants
