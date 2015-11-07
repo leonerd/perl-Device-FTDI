@@ -78,6 +78,8 @@ sub new
     # Idle high
     $self->write_gpio( DBUS, HIGH, I2C_SCL | I2C_SDA_OUT );
 
+    $self->set_check_mode( $args{check_mode} // CHECK_AFTER_ADDR() );
+
     return $self;
 }
 
@@ -149,6 +151,9 @@ The entire write (or write-then-read) transaction will be sent in a single
 USB transfer, and the bytes received will be returned to the caller.
 
 =back
+
+Because it offers a useful hybrid between speed efficiency and technical
+correctness, C<CHECK_AFTER_ADDR> is the default mode.
 
 =cut
 
