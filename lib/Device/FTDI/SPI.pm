@@ -86,6 +86,31 @@ return L<Future> instances.
 
 =cut
 
+=head2 set_clock_rate
+
+    $i2c->set_clock_rate( $rate )->get
+
+Sets the clock rate for data transfers, in units of bits per second.
+
+=cut
+
+sub set_clock_rate
+{
+    my $self = shift;
+    my ( $rate ) = @_;
+
+    my $baserate = 6E6;
+    if( $rate > $baserate ) {
+        $self->set_clkdiv5( 0 );
+        $baserate *= 5;
+    }
+    else {
+        $self->set_clkdiv5( 1 );
+    }
+
+    $self->set_clock_divisor( ( $baserate / $rate ) - 1 );
+}
+
 =head2 set_spi_mode
 
     $spi->set_spi_mode( $mode )->get

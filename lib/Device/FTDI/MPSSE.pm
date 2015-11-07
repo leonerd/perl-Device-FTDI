@@ -13,6 +13,8 @@ our $VERSION = '0.07';
 
 =head1 NAME
 
+=encoding UTF-8
+
 C<Device::FTDI::MPSSE> - use the MPSSE mode of an I<FDTI> chip
 
 =head1 DESCRIPTION
@@ -26,6 +28,10 @@ The following subclasses exist to simplify implementation of particular
 serial protocols:
 
 =over 2
+
+=item *
+
+L<Device::FTDI::I2C> for I²C
 
 =item *
 
