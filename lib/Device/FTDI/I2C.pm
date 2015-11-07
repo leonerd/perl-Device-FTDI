@@ -144,6 +144,7 @@ device, which will collect all the incoming C<ACK> or C<NACK> bits and any
 incoming data. Once the entire transaction has taken place, the module will
 check that all the required C<ACK>s were received. This mode is the fastest
 and involves the fewest USB operations.
+
 =item *
 
 In C<CHECK_NONE> mode, the module will not check any of the C<ACK> conditions.
