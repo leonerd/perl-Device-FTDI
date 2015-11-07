@@ -9,7 +9,22 @@ use strict;
 use warnings;
 use base qw( Device::FTDI::MPSSE );
 
+use utf8;
+
 our $VERSION = '0.07';
+
+=head1 NAME
+
+=encoding UTF-8
+
+C<Device::FTDI::I2C> - use an I<FDTI> chip to talk the I²C protocol
+
+=head1 DESCRIPTION
+
+This subclass of L<Device::FTDI::MPSSE> provides helpers around the basic
+MPSSE to fully implement the I²C protocol.
+
+=cut
 
 use Device::FTDI::MPSSE qw(
     DBUS
@@ -26,6 +41,19 @@ use constant {
 
 use constant { HIGH => 0xff, LOW => 0 };
 
+=head1 CONSTRUCTOR
+
+=cut
+
+=head2 new
+
+    $i2c = Device::FTDI::I2C->new( %args )
+
+This method takes no additional arguments beyond those taken by
+L<Device::FTDI::MPSSE/new>.
+
+=cut
+
 sub new
 {
     my $class = shift;
@@ -41,6 +69,21 @@ sub new
 
     return $self;
 }
+
+=head1 METHODS
+
+Any of the following methods documented with a trailing C<< ->get >> call
+return L<Future> instances.
+
+=cut
+
+=head2 set_clock_rate
+
+    $i2c->set_clock_rate( $rate )->get
+
+Sets the clock rate for data transfers, in units of bits per second.
+
+=cut
 
 sub set_clock_rate
 {
@@ -116,6 +159,19 @@ sub i2c_recv
     return $f;
 }
 
+=head2 write
+
+    $i2c->write( $addr, $data_out )->get
+
+Performs an I²C write operation to the chip at the given (7-bit) address
+value.
+
+The device sends a start condition, then a command to address the chip for
+writing, followed by the bytes given in the data, and finally a stop
+condition.
+
+=cut
+
 sub write
 {
     my $self = shift;
@@ -136,6 +192,22 @@ sub write
         $self->i2c_stop;
     });
 }
+
+=head2 write_then_read
+
+    $data_in = $i2c->write_then_read( $addr, $data_out, $len_in )->get
+
+Performs an I²C write operation followed by a read operation within the same
+transaction to the chip at the given (7-bit) address value.
+
+The device sends a start condition, then a command to address the chip for
+writing, followed by the bytes given in the data to output, then a repeated
+repeated start condition, then a command to address the chip for reading. It
+then attempts to read up to the given number of bytes of input from the chip,
+sending an C<ACK> condition to all but the final byte, to which it sends
+C<NACK>, and then finally a stop condition.
+
+=cut
 
 sub write_then_read
 {
@@ -169,5 +241,11 @@ sub write_then_read
             ->then_done( $data_in );
     });
 }
+
+=head1 AUTHOR
+
+Paul Evans <leonerd@leonerd.org.uk>
+
+=cut
 
 0x55AA;
