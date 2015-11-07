@@ -325,11 +325,18 @@ sub readwrite_bytes
 Performs a bitwise clocked serial transfer of between 1 and 8 single bits.
 
 In each case, the C<CLK> pin will count the specified length of bits of
-transfer. For the C<write_> and C<readwrite_> methods individal bits of the
-given byte will be clocked out of the C<DO> pin.
+transfer.
+
+For the C<write_> and C<readwrite_> methods individal bits of the given byte
+will be clocked out of the C<DO> pin. In C<MSBFIRST> mode, this will start
+from the highest bit of the byte; in C<LSBFIRST> mode, this will start from
+the lowest. The remaining bits will be ignored.
 
 For the C<read_> and C<readwrite_> methods, the returned future will yield
-the bits that were received in the C<DI> pin during this time.
+the bits that were received in the C<DI> pin during this time. In C<MSBFIRST>
+mode, the bits returned by the chip will start from the highest bit of the
+byte; in C<LSBFIRST> they will start from the lowest. The other bits will be
+set to zero.
 
 =cut
 
@@ -345,7 +352,27 @@ sub _readwrite_bits
 
     my $f = $self->_send_bytes( pack( "C C", $cmd, $len - 1 ) .
                                 ( $cmd & CMD_WRITE ? $data : "" ) );
-    $f = $self->_recv_bytes( 1 ) if $cmd & CMD_READ;
+
+    if( $cmd & CMD_READ ) {
+        $f = $self->_recv_bytes( 1 )
+        ->transform( done => sub {
+            my $bits = ord shift;
+
+            # The FTDI chip's shift register partial-byte reads come in at
+            # the "wrong" end of the byte. By shifting and masking the result
+            # we'll ensure the caller sees them where they expect, and doesn't
+            # get any extra junk bits
+            if( $self->{mpsse_setup} & CMD_LSBFIRST ) {
+                $bits >>= ( 8 - $len );
+            }
+            else {
+                $bits <<= ( 8 - $len );
+                $bits &= 0xff;
+            }
+
+            return chr $bits;
+        });
+    }
 
     return $f;
 }
