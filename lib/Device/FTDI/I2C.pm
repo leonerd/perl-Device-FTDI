@@ -104,6 +104,51 @@ sub set_clock_rate
     $self->set_clock_divisor( ( 4E6 / $rate ) - 1 );
 }
 
+=head2 set_check_mode
+
+    $i2c->set_check_mode( $mode )
+
+Sets the amount of ACK checking that the module will perform. Must be one of
+of the following exported constants:
+
+    CHECK_NONE, CHECK_EACH_BYTE
+
+This controls how eagerly the module will check for incoming C<ACK> conditions
+from the addressed I²C device. The more often the module checks, the better it
+can detect error conditions from devices, but the more USB transfers it
+requires and so the entire operation will take longer.
+
+=over 2
+
+=item *
+
+In C<CHECK_EACH_BYTE> mode, the module will wait to receive an C<ACK>
+condition after every single byte of transfer. This mode is the most
+technically-correct in terms of aborting the transfer as soon as the required
+C<ACK> is not received, but consumes an entire USB transfer roundtrip for
+every byte transferred, and is therefore the slowest.
+
+=item *
+
+In C<CHECK_NONE> mode, the module will not check any of the C<ACK> conditions.
+The entire write (or write-then-read) transaction will be sent in a single
+USB transfer, and the bytes received will be returned to the caller.
+
+=back
+
+=cut
+
+use constant {
+    CHECK_NONE      => 0,
+    CHECK_EACH_BYTE => 1,
+};
+
+sub set_check_mode
+{
+    my $self = shift;
+    ( $self->{i2c_check_mode} ) = @_;
+}
+
 sub i2c_start
 {
     my $self = shift;
@@ -144,22 +189,32 @@ sub i2c_stop
 sub i2c_send
 {
     my $self = shift;
-    my ( $data ) = @_;
+    my ( $data, $more_f ) = @_;
 
-    my $acks = "";
+    my $check = $self->{i2c_check_mode};
 
-    my $f = repeat {
+    repeat {
         my ( $byte ) = @_;
 
         $self->write_bytes( $byte );
         # Release SDA
         $self->write_gpio( DBUS, HIGH, I2C_SDA_OUT );
 
-        $self->read_bits( 1 )
-            ->on_done( sub { $acks .= $_[0] } );
-    } foreach => [ split m//, $data ];
+        my $f = $self->read_bits( 1 );
 
-    return $f->transform( done => sub { $acks } );
+        if( $check ) {
+            return $f->transform( done => sub {
+                my ( $ack ) = @_;
+                $ack eq "\x00" or
+                    die "Received NACK to data byte\n";
+            });
+        }
+        else {
+            push @$more_f, $f;
+            return Future->done;
+        }
+    } foreach => [ split m//, $data ],
+      while => sub { !shift->failure };
 }
 
 use constant { WRITE => 0, READ => 1 };
@@ -167,13 +222,27 @@ use constant { WRITE => 0, READ => 1 };
 sub i2c_sendaddr
 {
     my $self = shift;
-    my ( $addr, $rd ) = @_;
+    my ( $addr, $rd, $more_f ) = @_;
+
+    my $check = $self->{i2c_check_mode};
 
     $self->write_bytes( pack "C", $rd | $addr << 1 );
     # Release SDA
     $self->write_gpio( DBUS, HIGH, I2C_SDA_OUT );
 
-    $self->read_bits( 1 );
+    my $f = $self->read_bits( 1 );
+
+    if( $check ) {
+        return $f->transform( done => sub {
+            my ( $ack ) = @_;
+            $ack eq "\x00" or
+                die sprintf "Received NACK to addressing command to 0x%02X\n", $addr;
+        });
+    }
+    else {
+        push @$more_f, $f;
+        return Future->done;
+    }
 }
 
 sub i2c_recv
@@ -216,11 +285,16 @@ sub write
 
     $self->i2c_start;
 
-    $self->i2c_sendaddr( $addr, WRITE )
+    my @more_f;
+
+    $self->i2c_sendaddr( $addr, WRITE, \@more_f )
     ->then( sub {
-        $self->i2c_send( $data );
+        $self->i2c_send( $data, \@more_f )
     })->then( sub {
-        $self->i2c_stop;
+        my $f = $self->i2c_stop;
+
+        return $f unless @more_f;
+        Future->needs_all( @more_f )->then( sub { $f } );
     });
 }
 
@@ -247,19 +321,24 @@ sub write_then_read
 
     $self->i2c_start;
 
-    $self->i2c_sendaddr( $addr, WRITE )
+    my @more_f;
+
+    $self->i2c_sendaddr( $addr, WRITE, \@more_f )
     ->then( sub {
-        $self->i2c_send( $data_out );
+        $self->i2c_send( $data_out, \@more_f );
     })->then( sub {
         $self->i2c_repeated_start;
-        $self->i2c_sendaddr( $addr, READ )
+        $self->i2c_sendaddr( $addr, READ, \@more_f )
     })->then( sub {
         $self->i2c_recv( $len_in );
     })->then( sub {
         my ( $data_in ) = @_;
 
-        $self->i2c_stop
+        my $f = $self->i2c_stop
             ->then_done( $data_in );
+
+        return $f unless @more_f;
+        Future->needs_all( @more_f )->then( sub { $f } );
     });
 }
 
