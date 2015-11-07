@@ -38,6 +38,8 @@ use constant {
     SPI_CS   => (1<<3),
 };
 
+use constant { HIGH => 0xff, LOW => 0 };
+
 =head1 CONSTRUCTOR
 
 =cut
@@ -72,7 +74,7 @@ sub new
 
     $self->set_open_collector( 0, 0 );
 
-    $self->write_gpio( DBUS, SPI_CS, SPI_CS );
+    $self->write_gpio( DBUS, HIGH, SPI_CS );
 
     return $self;
 }
@@ -103,22 +105,22 @@ sub set_spi_mode
 
     if( $mode == 0 ) {
         # CPOL=0, CPHA=0
-        $idle = 0;
+        $idle = LOW;
         $clock_sense = WRCLOCK_FALLING | RDCLOCK_RISING;
     }
     elsif( $mode == 1 ) {
         # CPOL=0, CPHA=1
-        $idle = 0;
+        $idle = LOW;
         $clock_sense = WRCLOCK_RISING | RDCLOCK_FALLING;
     }
     elsif( $mode == 2 ) {
         # CPOL=1, CPHA=0
-        $idle = SPI_SCK;
+        $idle = HIGH;
         $clock_sense = WRCLOCK_RISING | RDCLOCK_FALLING;
     }
     elsif( $mode == 3 ) {
         # CPOL=1, CPHA=1
-        $idle = SPI_SCK;
+        $idle = HIGH;
         $clock_sense = WRCLOCK_FALLING | RDCLOCK_RISING;
     }
     else {
@@ -140,9 +142,9 @@ sub write
     my $self = shift;
     my ( $bytes ) = @_;
 
-    $self->write_gpio( DBUS, 0, SPI_CS );
+    $self->write_gpio( DBUS, LOW, SPI_CS );
     $self->write_bytes( $bytes );
-    $self->write_gpio( DBUS, SPI_CS, SPI_CS );
+    $self->write_gpio( DBUS, HIGH, SPI_CS );
 }
 
 =head2 read
@@ -156,9 +158,9 @@ sub read
     my $self = shift;
     my ( $len ) = @_;
 
-    $self->write_gpio( DBUS, 0, SPI_CS );
+    $self->write_gpio( DBUS, LOW, SPI_CS );
     my $f = $self->read_bytes( $len );
-    $self->write_gpio( DBUS, SPI_CS, SPI_CS );
+    $self->write_gpio( DBUS, HIGH, SPI_CS );
 
     return $f;
 }
@@ -177,9 +179,9 @@ sub readwrite
     my $self = shift;
     my ( $bytes ) = @_;
 
-    $self->write_gpio( DBUS, 0, SPI_CS );
+    $self->write_gpio( DBUS, LOW, SPI_CS );
     my $f = $self->readwrite_bytes( $bytes );
-    $self->write_gpio( DBUS, SPI_CS, SPI_CS );
+    $self->write_gpio( DBUS, HIGH, SPI_CS );
 
     return $f;
 }
