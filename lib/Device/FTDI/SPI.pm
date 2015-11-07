@@ -25,7 +25,7 @@ MPSSE to fully implement the SPI protocol.
 =cut
 
 use Device::FTDI::MPSSE qw(
-    WRCLOCK_FALLING WRCLOCK_RISING RDCLOCK_RISING RDCLOCK_FALLING
+    CLOCK_FALLING CLOCK_RISING
     DBUS
 );
 
@@ -101,33 +101,31 @@ sub set_spi_mode
     my ( $mode ) = @_;
 
     my $idle;
-    my $clock_sense;
 
     if( $mode == 0 ) {
         # CPOL=0, CPHA=0
         $idle = LOW;
-        $clock_sense = WRCLOCK_FALLING | RDCLOCK_RISING;
+        $self->set_clock_edges( CLOCK_RISING, CLOCK_FALLING );
     }
     elsif( $mode == 1 ) {
         # CPOL=0, CPHA=1
         $idle = LOW;
-        $clock_sense = WRCLOCK_RISING | RDCLOCK_FALLING;
+        $self->set_clock_edges( CLOCK_FALLING, CLOCK_RISING );
     }
     elsif( $mode == 2 ) {
         # CPOL=1, CPHA=0
         $idle = HIGH;
-        $clock_sense = WRCLOCK_RISING | RDCLOCK_FALLING;
+        $self->set_clock_edges( CLOCK_FALLING, CLOCK_RISING );
     }
     elsif( $mode == 3 ) {
         # CPOL=1, CPHA=1
         $idle = HIGH;
-        $clock_sense = WRCLOCK_FALLING | RDCLOCK_RISING;
+        $self->set_clock_edges( CLOCK_RISING, CLOCK_FALLING );
     }
     else {
         croak "Bad SPI mode";
     }
 
-    $self->set_clock_sense( $clock_sense );
     $self->write_gpio( DBUS, $idle, SPI_SCK );
 }
 

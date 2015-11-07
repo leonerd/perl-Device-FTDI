@@ -219,37 +219,35 @@ sub set_bit_order
     # TODO: Consider a token-effort Future->done for completeness?
 }
 
-=head2 set_clock_sense
+=head2 set_clock_edges
 
-    $mpsse->set_clock_sense( $sense )
+    $mpsse->set_clock_edges( $rdclock, $wrclock )
 
 Configures the clocking sense of subsequent read or write operations.
 
-I<$sense> should be a bitwise-or combination of one of each of the following
-two pairs of exported constants
+Each value should be one of the following constants
 
-    RDCLOCK_FALLING, RDCLOCK_RISING
-    WRCLOCK_FALLING, WRCLOCK_RISING
+    CLOCK_FALLING, CLOCK_RISING
 
 =cut
 
 push @EXPORT_OK, qw(
-    RDCLOCK_FALLING RDCLOCK_RISING WRCLOCK_FALLING WRCLOCK_RISING
+    CLOCK_FALLING CLOCK_RISING
 );
 use constant {
-    RDCLOCK_FALLING => CMD_CLK_ON_READ,
-    RDCLOCK_RISING  => 0,
-    WRCLOCK_FALLING => CMD_CLK_ON_WRITE,
-    WRCLOCK_RISING  => 0,
+    CLOCK_FALLING => 1,
+    CLOCK_RISING  => 0,
 };
 
-sub set_clock_sense
+sub set_clock_edges
 {
     my $self = shift;
-    my ( $sense ) = @_;
+    my ( $rdclock, $wrclock ) = @_;
 
-    ( $self->{mpsse_setup} &= ~(CMD_CLK_ON_READ|CMD_CLK_ON_WRITE) )
-                           |= ( $sense & (CMD_CLK_ON_READ|CMD_CLK_ON_WRITE) );
+    $self->{mpsse_cmd_rd} = CMD_READ  | ( $rdclock ? CMD_CLK_ON_READ  : 0 );
+    $self->{mpsse_cmd_wr} = CMD_WRITE | ( $wrclock ? CMD_CLK_ON_WRITE : 0 );
+
+    $self->{mpsse_cmd_rdwr} = $self->{mpsse_cmd_wr} | $self->{mpsse_cmd_rd};
 }
 
 =head2 write_bytes
@@ -297,19 +295,19 @@ sub _readwrite_bytes
 sub write_bytes
 {
     my $self = shift;
-    $self->_readwrite_bytes( CMD_WRITE, length $_[0], $_[0] );
+    $self->_readwrite_bytes( $self->{mpsse_cmd_wr}, length $_[0], $_[0] );
 }
 
 sub read_bytes
 {
     my $self = shift;
-    $self->_readwrite_bytes( CMD_READ,  $_[0], "" );
+    $self->_readwrite_bytes( $self->{mpsse_cmd_rd}, $_[0], "" );
 }
 
 sub readwrite_bytes
 {
     my $self = shift;
-    $self->_readwrite_bytes( CMD_WRITE|CMD_READ, length $_[0], $_[0] );
+    $self->_readwrite_bytes( $self->{mpsse_cmd_rdwr}, length $_[0], $_[0] );
 }
 
 =head2 write_bits
@@ -355,19 +353,19 @@ sub _readwrite_bits
 sub write_bits
 {
     my $self = shift;
-    $self->_readwrite_bits( CMD_WRITE, $_[0], $_[1] );
+    $self->_readwrite_bits( $self->{mpsse_cmd_wr}, $_[0], $_[1] );
 }
 
 sub read_bits
 {
     my $self = shift;
-    $self->_readwrite_bits( CMD_READ,  $_[0], "" );
+    $self->_readwrite_bits( $self->{mpsse_cmd_rd}, $_[0], "" );
 }
 
 sub readwrite_bits
 {
     my $self = shift;
-    $self->_readwrite_bits( CMD_WRITE|CMD_READ, $_[0], $_[1] );
+    $self->_readwrite_bits( $self->{mpsse_cmd_rdwr}, $_[0], $_[1] );
 }
 
 =head2 tris_gpio
