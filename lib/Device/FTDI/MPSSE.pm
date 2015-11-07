@@ -106,7 +106,7 @@ sub new
     my $tris = 0xff & ~(1<<2);
 
     $self->set_bitmode( 0, Device::FTDI::BITMODE_RESET );
-    $self->set_bitmode( $tris, Device::FTDI::BITMODE_MPSSE );
+    $self->set_bitmode( 0, Device::FTDI::BITMODE_MPSSE );
 
     $self->set_adaptive_clock( 0 );
     $self->set_3phase_clock( 0 );
