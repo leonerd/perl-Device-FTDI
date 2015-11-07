@@ -9,8 +9,6 @@ my $i2c = Device::FTDI::I2C->new(
 
 sleep 0.1;
 
-$SIG{TERM} = $SIG{INT} = sub { kill ABRT => $$ };
-
 my $addr = 0x60;
 
 # Read the ID register
