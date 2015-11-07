@@ -287,7 +287,8 @@ sub _readwrite_bytes
     $data = substr( $data, 0, $len );
     $data .= "\0" x ( $len - length $data );
 
-    my $f = $self->_send_bytes( pack( "C v", $cmd, $len - 1 ) . ( $cmd & CMD_WRITE ? $data : "" ) );
+    my $f = $self->_send_bytes( pack( "C v", $cmd, $len - 1 ) .
+                                ( $cmd & CMD_WRITE ? $data : "" ) );
     $f = $self->_recv_bytes( $len ) if $cmd & CMD_READ;
 
     return $f;
@@ -309,6 +310,64 @@ sub readwrite_bytes
 {
     my $self = shift;
     $self->_readwrite_bytes( CMD_WRITE|CMD_READ, length $_[0], $_[0] );
+}
+
+=head2 write_bits
+
+=head2 read_bits
+
+=head2 readwrite_bits
+
+    $mpsse->write_bits( $bitlen, $bits_out )->get
+
+    $bits_in = $mpsse->read_bits( $bitlen )->get
+
+    $bits_in = $mpsse->readwrite_bits( $bitlen, $bits_out )->get
+
+Performs a bitwise clocked serial transfer of between 1 and 8 single bits.
+
+In each case, the C<CLK> pin will count the specified length of bits of
+transfer. For the C<write_> and C<readwrite_> methods individal bits of the
+given byte will be clocked out of the C<DO> pin.
+
+For the C<read_> and C<readwrite_> methods, the returned future will yield
+the bits that were received in the C<DI> pin during this time.
+
+=cut
+
+sub _readwrite_bits
+{
+    my $self = shift;
+    my ( $cmd, $len, $data ) = @_;
+
+    $cmd |= $self->{mpsse_setup} | CMD_BITMODE;
+
+    $data = substr( $data, 0, 1 );
+    $data = "\0" if !length $data;
+
+    my $f = $self->_send_bytes( pack( "C C", $cmd, $len - 1 ) .
+                                ( $cmd & CMD_WRITE ? $data : "" ) );
+    $f = $self->_recv_bytes( 1 ) if $cmd & CMD_READ;
+
+    return $f;
+}
+
+sub write_bits
+{
+    my $self = shift;
+    $self->_readwrite_bits( CMD_WRITE, $_[0], $_[1] );
+}
+
+sub read_bits
+{
+    my $self = shift;
+    $self->_readwrite_bits( CMD_READ,  $_[0], "" );
+}
+
+sub readwrite_bits
+{
+    my $self = shift;
+    $self->_readwrite_bits( CMD_WRITE|CMD_READ, $_[0], $_[1] );
 }
 
 =head2 tris_gpio
