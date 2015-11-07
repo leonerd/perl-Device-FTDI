@@ -146,28 +146,42 @@ sub i2c_send
     my $self = shift;
     my ( $data ) = @_;
 
-    $self->write_bytes( $data );
-    # Release SDA
-    $self->write_gpio( DBUS, HIGH, I2C_SDA_OUT );
+    my $acks = "";
 
-    $self->read_bits( 1 )
-        ->transform( done => sub {
-            !( ord $_[0] & 0x80 );
-        });
+    my $f = repeat {
+        my ( $byte ) = @_;
+
+        $self->write_bytes( $byte );
+        # Release SDA
+        $self->write_gpio( DBUS, HIGH, I2C_SDA_OUT );
+
+        $self->read_bits( 1 )
+            ->on_done( sub { $acks .= $_[0] } );
+    } foreach => [ split m//, $data ];
+
+    return $f->transform( done => sub { $acks } );
 }
 
 sub i2c_recv
 {
     my $self = shift;
-    my ( $ack ) = @_;
+    my ( $len ) = @_;
 
-    my $f = $self->read_bytes( 1 );
+    my $data_in = "";
 
-    $self->write_bits( 1, chr( $ack ? LOW : HIGH ) );
-    # Release SDA
-    $self->write_gpio( DBUS, HIGH, I2C_SDA_OUT );
+    my $f = repeat {
+        my ( $ack ) = @_;
+        my $read_f = $self->read_bytes( 1 )
+            ->on_done( sub { $data_in .= $_[0] } );
 
-    return $f;
+        $self->write_bits( 1, chr( $ack ? LOW : HIGH ) );
+        # Release SDA
+        $self->write_gpio( DBUS, HIGH, I2C_SDA_OUT );
+
+        $read_f;
+    } foreach => [ ( 1 ) x ( $len - 1 ), 0 ];
+
+    return $f->transform( done => sub { $data_in } );
 }
 
 =head2 write
@@ -195,10 +209,7 @@ sub write
         my ( $ack ) = @_;
         # $ack or die "received ACK from device\n";
 
-        repeat {
-            $self->i2c_send( $_[0] )
-                ->on_done( sub { my ( $ack ) = @_; } )
-        } foreach => [ split m//, $data ];
+        $self->i2c_send( $data );
     })->then( sub {
         $self->i2c_stop;
     });
@@ -225,17 +236,13 @@ sub write_then_read
     my $self = shift;
     my ( $addr, $data_out, $len_in ) = @_;
 
-    my $data_in = "";
-
     $self->i2c_start;
 
     $self->i2c_send( pack "C", $addr << 1 )
     ->then( sub {
         my ( $ack ) = @_;
 
-        repeat {
-            $self->i2c_send( $_[0] )
-        } foreach => [ split m//, $data_out ];
+        $self->i2c_send( $data_out );
     })->then( sub {
         $self->i2c_repeated_start;
 
@@ -243,11 +250,10 @@ sub write_then_read
     })->then( sub {
         my ( $ack ) = @_;
 
-        repeat {
-            $self->i2c_recv( $_[0] )
-                ->on_done( sub { $data_in .= $_[0] } )
-        } foreach => [ ( 1 ) x ( $len_in - 1 ), 0 ]
+        $self->i2c_recv( $len_in );
     })->then( sub {
+        my ( $data_in ) = @_;
+
         $self->i2c_stop
             ->then_done( $data_in );
     });
