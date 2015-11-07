@@ -192,7 +192,7 @@ sub read
     return $f;
 }
 
-=head2
+=head2 readwrite
 
     $bytes_in = $spi->readwrite( $bytes_out )->get;
 
