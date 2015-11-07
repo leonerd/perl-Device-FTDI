@@ -183,17 +183,15 @@ sub i2c_recv
 
     my $data_in = "";
 
-    my $f = repeat {
-        my ( $ack ) = @_;
-        my $read_f = $self->read_bytes( 1 )
+    my $f;
+    foreach my $ack ( ( 1 ) x ( $len - 1 ), 0 ) {
+        $f = $self->read_bytes( 1 )
             ->on_done( sub { $data_in .= $_[0] } );
 
         $self->write_bits( 1, chr( $ack ? LOW : HIGH ) );
         # Release SDA
         $self->write_gpio( DBUS, HIGH, I2C_SDA_OUT );
-
-        $read_f;
-    } foreach => [ ( 1 ) x ( $len - 1 ), 0 ];
+    }
 
     return $f->transform( done => sub { $data_in } );
 }
