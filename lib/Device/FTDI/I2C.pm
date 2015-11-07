@@ -204,6 +204,8 @@ sub i2c_stop
 
     my $f;
 
+    $self->write_gpio( DBUS, LOW, I2C_SDA_OUT );
+
     # S&H delay
     $self->write_gpio( DBUS, HIGH, I2C_SCL ) for 1 .. 10;
     $f = $self->write_gpio( DBUS, HIGH, I2C_SDA_OUT ) for 1 .. 10;
