@@ -566,11 +566,14 @@ sub await
     my $recvbuff = "";
     my $recv_f = $mpsse->{mpsse_recv_f};
 
-    while( $mpsse->{mpsse_recv_len} ) {
-        $mpsse->read_data( my $more, $mpsse->{mpsse_recv_len} );
+    my $len = $mpsse->{mpsse_recv_len};
+    $mpsse->{mpsse_recv_len} = 0;
+
+    while( $len ) {
+        $mpsse->read_data( my $more, $len );
 
         $recvbuff .= $more;
-        $mpsse->{mpsse_recv_len} -= length $more;
+        $len -= length $more;
 
         while( @$recv_f and length $recvbuff >= $recv_f->[0][0] ) {
             my ( $len, $f ) = @{ shift @$recv_f };
