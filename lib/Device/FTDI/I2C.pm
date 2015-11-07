@@ -157,6 +157,10 @@ correctness, C<CHECK_AFTER_ADDR> is the default mode.
 
 =cut
 
+push our @EXPORT_OK, qw (
+    CHECK_NONE CHECK_AT_END CHECK_AFTER_ADDR CHECK_EACH_BYTE
+);
+
 use constant {
     CHECK_NONE       => 0,
     CHECK_AT_END     => 1,
