@@ -111,7 +111,7 @@ sub set_clock_rate
 Sets the amount of ACK checking that the module will perform. Must be one of
 of the following exported constants:
 
-    CHECK_NONE, CHECK_AT_END, CHECK_EACH_BYTE
+    CHECK_NONE, CHECK_AT_END, CHECK_AFTER_ADDR, CHECK_EACH_BYTE
 
 This controls how eagerly the module will check for incoming C<ACK> conditions
 from the addressed I²C device. The more often the module checks, the better it
@@ -128,6 +128,12 @@ technically-correct in terms of aborting the transfer as soon as the required
 C<ACK> is not received, but consumes an entire USB transfer roundtrip for
 every byte transferred, and is therefore the slowest.
 
+=item *
+
+In C<CHECK_AFTER_ADDR> mode, just the addressing command is sent and then the
+first C<ACK> or C<NACK> bit is read in. At this point the module takes the
+decision to abort (on C<NACK>) or continue (on C<ACK>). If it continues, it
+will send or receive all the subsequent bytes of data in one go.
 
 =item *
 
@@ -147,9 +153,10 @@ USB transfer, and the bytes received will be returned to the caller.
 =cut
 
 use constant {
-    CHECK_NONE      => 0,
-    CHECK_AT_END    => 1,
-    CHECK_EACH_BYTE => 2,
+    CHECK_NONE       => 0,
+    CHECK_AT_END     => 1,
+    CHECK_AFTER_ADDR => 2,
+    CHECK_EACH_BYTE  => 3,
 };
 
 sub set_check_mode
@@ -251,7 +258,7 @@ sub i2c_sendaddr
         });
     }
 
-    if( $check >= CHECK_EACH_BYTE ) {
+    if( $check >= CHECK_AFTER_ADDR ) {
         return $f;
     }
     else {
