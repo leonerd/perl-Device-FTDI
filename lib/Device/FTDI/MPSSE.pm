@@ -101,10 +101,6 @@ sub new
 
     $self->purge_buffers;
 
-    # default tristate output on SCK/DO/TMS/DBUS4..7
-    #                  input on DI
-    my $tris = 0xff & ~(1<<2);
-
     $self->set_bitmode( 0, Device::FTDI::BITMODE_RESET );
     $self->set_bitmode( 0, Device::FTDI::BITMODE_MPSSE );
 
@@ -117,11 +113,14 @@ sub new
 
     $self->{mpsse_setup} = 0;
 
-    $self->{mpsse_gpio}[DBUS] = [ 0, $tris ];
-    $self->_mpsse_gpio_set( DBUS, 0, $tris );
+    # Default output on SCK/DO/TMS, input every other
 
-    $self->{mpsse_gpio}[CBUS] = [ 0, 0xff ];
-    $self->_mpsse_gpio_set( CBUS, 0, 0xff );
+    my $dir = (1<<0) | (1<<1) | (1<<3);
+    $self->{mpsse_gpio}[DBUS] = [ 0, $dir ];
+    $self->_mpsse_gpio_set( DBUS, 0, $dir );
+
+    $self->{mpsse_gpio}[CBUS] = [ 0, 0 ];
+    $self->_mpsse_gpio_set( CBUS, 0, 0 );
 
     return $self;
 }
