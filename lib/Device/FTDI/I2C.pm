@@ -111,7 +111,7 @@ sub set_clock_rate
 Sets the amount of ACK checking that the module will perform. Must be one of
 of the following exported constants:
 
-    CHECK_NONE, CHECK_EACH_BYTE
+    CHECK_NONE, CHECK_AT_END, CHECK_EACH_BYTE
 
 This controls how eagerly the module will check for incoming C<ACK> conditions
 from the addressed I²C device. The more often the module checks, the better it
@@ -128,6 +128,14 @@ technically-correct in terms of aborting the transfer as soon as the required
 C<ACK> is not received, but consumes an entire USB transfer roundtrip for
 every byte transferred, and is therefore the slowest.
 
+
+=item *
+
+In C<CHECK_AT_END> mode, the entire I²C transaction is sent to the I<FDTI>
+device, which will collect all the incoming C<ACK> or C<NACK> bits and any
+incoming data. Once the entire transaction has taken place, the module will
+check that all the required C<ACK>s were received. This mode is the fastest
+and involves the fewest USB operations.
 =item *
 
 In C<CHECK_NONE> mode, the module will not check any of the C<ACK> conditions.
@@ -140,7 +148,8 @@ USB transfer, and the bytes received will be returned to the caller.
 
 use constant {
     CHECK_NONE      => 0,
-    CHECK_EACH_BYTE => 1,
+    CHECK_AT_END    => 1,
+    CHECK_EACH_BYTE => 2,
 };
 
 sub set_check_mode
@@ -201,13 +210,16 @@ sub i2c_send
         $self->write_gpio( DBUS, HIGH, I2C_SDA_OUT );
 
         my $f = $self->read_bits( 1 );
-
         if( $check ) {
-            return $f->transform( done => sub {
+            $f = $f->transform( done => sub {
                 my ( $ack ) = @_;
                 $ack eq "\x00" or
                     die "Received NACK to data byte\n";
             });
+        }
+
+        if( $check >= CHECK_EACH_BYTE ) {
+            return $f;
         }
         else {
             push @$more_f, $f;
@@ -231,13 +243,16 @@ sub i2c_sendaddr
     $self->write_gpio( DBUS, HIGH, I2C_SDA_OUT );
 
     my $f = $self->read_bits( 1 );
-
     if( $check ) {
-        return $f->transform( done => sub {
+        $f = $f->transform( done => sub {
             my ( $ack ) = @_;
             $ack eq "\x00" or
                 die sprintf "Received NACK to addressing command to 0x%02X\n", $addr;
         });
+    }
+
+    if( $check >= CHECK_EACH_BYTE ) {
+        return $f;
     }
     else {
         push @$more_f, $f;
@@ -334,11 +349,8 @@ sub write_then_read
     })->then( sub {
         my ( $data_in ) = @_;
 
-        my $f = $self->i2c_stop
+        Future->needs_all( $self->i2c_stop, @more_f )
             ->then_done( $data_in );
-
-        return $f unless @more_f;
-        Future->needs_all( @more_f )->then( sub { $f } );
     });
 }
 
