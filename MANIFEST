@@ -3,6 +3,7 @@ examples/max7221-clock.pl
 examples/mpl3115a2.pl
 examples/synopsis.pl
 FTDI.xs
+lib/Device/Chip/Adapter/FTDI.pm
 lib/Device/FTDI.pm
 lib/Device/FTDI/I2C.pm
 lib/Device/FTDI/MPSSE.pm
