@@ -1,5 +1,11 @@
 Revision history for Device-FTDI
 
+0.09    2015/11/10 00:29:32
+        [CHANGES]
+         * Implement a Device::Chip::Adapter class
+         * Make sure to correctly generate I²C STOP conditions
+         * Fix POD errors
+
 0.08    2015/11/07 18:34:18
         [CHANGES]
          * Added Device::FTDI::MPSSE; helper subclass for using MPSSE bitmode
