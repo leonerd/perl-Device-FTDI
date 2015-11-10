@@ -7,7 +7,6 @@ package Device::FTDI::MPSSE;
 
 use strict;
 use warnings;
-use base qw( Device::FTDI );
 
 our $VERSION = '0.09';
 
@@ -19,10 +18,10 @@ C<Device::FTDI::MPSSE> - use the MPSSE mode of an I<FDTI> chip
 
 =head1 DESCRIPTION
 
-This subclass of L<Device::FTDI> provides convenient methods to access the
-Multi-Protocol Synchronous Serial Engine (MPSSE) mode of certain I<FTDI>
-chips. It provides methods to wrap the various commands that control the
-MPSSE and interpret their responses.
+This module provides convenient methods to access the Multi-Protocol
+Synchronous Serial Engine (MPSSE) mode of certain I<FTDI> chips. It
+provides methods to wrap the various commands that control the MPSSE and
+interpret their responses.
 
 The following subclasses exist to simplify implementation of particular
 serial protocols:
@@ -85,9 +84,11 @@ use constant {
 
     $mpsse = Device::FTDI::MPSSE->new( %args )
 
-Takes the same arguments as L<Device::FTDI/new>, except that it applies a
-default C<product> parameter of the product ID identifying the I<FT232H>
-device.
+An instance of this class needs a L<Device::FTDI> object to operate on. Either
+it can be provided as a single named argument called C<ftdi>, or this
+constructor will build one by passing the other named arguments to
+L<Device::FTDI/new>, except that it applies a default C<product> parameter of
+the product ID identifying the I<FT232H> device.
 
 This constructor performs all the necessary setup to initialse the MPSSE.
 
@@ -98,17 +99,22 @@ sub new
     my $class = shift;
     my %args = @_;
 
-    my $self = $class->SUPER::new( product => PID_FT232H, %args );
+    my $ftdi = $args{ftdi} //
+        Device::FTDI->new( product => PID_FT232H, %args );
 
-    $self->reset;
+    $ftdi->reset;
 
-    $self->read_data_set_chunksize( 65536 );
-    $self->write_data_set_chunksize( 65536 );
+    $ftdi->read_data_set_chunksize( 65536 );
+    $ftdi->write_data_set_chunksize( 65536 );
 
-    $self->purge_buffers;
+    $ftdi->purge_buffers;
 
-    $self->set_bitmode( 0, Device::FTDI::BITMODE_RESET );
-    $self->set_bitmode( 0, Device::FTDI::BITMODE_MPSSE );
+    $ftdi->set_bitmode( 0, Device::FTDI::BITMODE_RESET );
+    $ftdi->set_bitmode( 0, Device::FTDI::BITMODE_MPSSE );
+
+    my $self = bless {
+        ftdi => $ftdi,
+    }, $class;
 
     $self->set_adaptive_clock( 0 );
     $self->set_3phase_clock( 0 );
@@ -646,7 +652,7 @@ sub await
     }
 
     if( length $mpsse->{mpsse_writebuff} ) {
-        $mpsse->write_data( $mpsse->{mpsse_writebuff} );
+        $mpsse->{ftdi}->write_data( $mpsse->{mpsse_writebuff} );
         $mpsse->{mpsse_writebuff} = "";
 
         $_->done() for splice @{ $mpsse->{mpsse_send_f} };
@@ -659,7 +665,7 @@ sub await
     $mpsse->{mpsse_recv_len} = 0;
 
     while( $len ) {
-        $mpsse->read_data( my $more, $len );
+        $mpsse->{ftdi}->read_data( my $more, $len );
 
         $recvbuff .= $more;
         $len -= length $more;
