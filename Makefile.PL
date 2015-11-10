@@ -27,8 +27,9 @@ WriteMakefile(
         : () ),
     PL_FILES           => {},
     PREREQ_PM          => {
-        'Future'           => 0,
-        'Test::More'       => 0,
+        'Device::Chip::Adapter' => 0,
+        'Future'                => 0,
+        'Test::More'            => 0,
     },
     CONFIGURE_REQUIRES => { 'ExtUtils::PkgConfig' => 0, },
     BUILD_REQUIRES     => { 'Test::More' => 0.94, },
