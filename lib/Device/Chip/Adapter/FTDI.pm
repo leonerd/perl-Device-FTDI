@@ -9,6 +9,8 @@ use strict;
 use warnings;
 use base qw( Device::Chip::Adapter );
 
+use Device::FTDI qw( PID_FT232H );
+
 =head1 NAME
 
 C<Device::Chip::Adapter::FTDI> - a C<Device::Chip::Adapter> implementation
@@ -33,14 +35,22 @@ chip as a hardware adapter.
 Returns a new instance of a C<Device::Chip::Adapter::FTDI>. Takes the same
 named argmuents as L<Device::FTDI/new>.
 
+This module applies a default product ID of that of the I<FT232H> (value
+0x6014); as this is more likely to be the sort of chip used for synchronous
+serial protocols like SPI as well as UART connections.
+
 =cut
 
 sub new
 {
     my $class = shift;
-    # TODO: at some point try to split the FTDI objects up so we can obtain a
-    # handle on the basic USB object, and later upgrade it to e.g. SPI
-    return bless { ftdi_args => [ @_ ] }, $class;
+    my %args = @_;
+
+    $args{product} //= PID_FT232H;
+
+    my $ftdi = Device::FTDI->new( %args );
+
+    return bless { ftdi => $ftdi }, $class;
 }
 
 sub new_from_description
@@ -62,7 +72,7 @@ sub shutdown { }
 sub make_protocol_SPI
 {
     my $self = shift;
-    my $spi = Device::Chip::Adapter::FTDI::_SPI->new( @{ $self->{ftdi_args} } );
+    my $spi = Device::Chip::Adapter::FTDI::_SPI->new( ftdi => $self->{ftdi} );
 
     $self->{protocol} = $spi;
 
