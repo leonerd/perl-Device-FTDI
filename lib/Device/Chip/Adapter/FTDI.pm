@@ -43,6 +43,20 @@ sub new
     return bless { ftdi_args => [ @_ ] }, $class;
 }
 
+sub new_from_description
+{
+    my $class = shift;
+    my %opts = @_;
+
+    # VID/PID values are usually in hex
+    defined $_ and $_ =~ m/^0/ and $_ = oct $_
+        for $opts{vendor}, $opts{product};
+
+    return $class->new(
+        map { $_ => $opts{$_} } qw( vendor product serial index )
+    );
+}
+
 sub shutdown { }
 
 sub make_protocol_SPI
