@@ -647,7 +647,10 @@ sub await
 
     my $mpsse = $self->{mpsse};
 
-    if( $mpsse->{mpsse_recv_len} ) {
+    my $len = $mpsse->{mpsse_recv_len};
+    $mpsse->{mpsse_recv_len} = 0;
+
+    if( $len ) {
         $mpsse->{mpsse_writebuff} .= pack "C", CMD_SEND_IMMEDIATE;
     }
 
@@ -660,9 +663,6 @@ sub await
 
     my $recvbuff = "";
     my $recv_f = $mpsse->{mpsse_recv_f};
-
-    my $len = $mpsse->{mpsse_recv_len};
-    $mpsse->{mpsse_recv_len} = 0;
 
     while( $len ) {
         $mpsse->{ftdi}->read_data( my $more, $len );
