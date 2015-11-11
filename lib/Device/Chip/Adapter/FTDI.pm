@@ -81,9 +81,19 @@ sub make_protocol_SPI
 
 package
     Device::Chip::Adapter::FTDI::_SPI;
-use base qw( Device::FTDI::SPI );
 
 use Carp;
+
+sub new
+{
+    my $class = shift;
+
+    require Device::FTDI::SPI;
+
+    return bless {
+        spi => Device::FTDI::SPI->new( @_ ),
+    }, $class;
+}
 
 sub configure
 {
@@ -96,14 +106,18 @@ sub configure
     croak "Unrecognised configuration options: " . join( ", ", keys %args )
         if %args;
 
-    $self->set_spi_mode( $mode )          if defined $mode;
-    $self->set_clock_rate( $max_bitrate ) if defined $max_bitrate;
+    my $spi = $self->{spi};
+    $spi->set_spi_mode( $mode )          if defined $mode;
+    $spi->set_clock_rate( $max_bitrate ) if defined $max_bitrate;
 
     Future->done;
 }
 
 # Basic FTDI has no control of power
 sub power { Future->done }
+
+sub write     { shift->{spi}->write( @_ ) }
+sub readwrite { shift->{spi}->readwrite( @_ ) }
 
 =head1 AUTHOR
 
