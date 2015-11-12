@@ -27,7 +27,7 @@ WriteMakefile(
         : () ),
     PL_FILES           => {},
     PREREQ_PM          => {
-        'Device::Chip::Adapter' => 0,
+        'Device::Chip::Adapter' => '0.02',
         'Future'                => 0,
         'Test::More'            => 0,
     },

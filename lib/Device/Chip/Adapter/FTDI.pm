@@ -79,6 +79,22 @@ sub make_protocol_SPI
     Future->done( $spi );
 }
 
+sub make_protocol_I2C
+{
+    my $self = shift;
+
+    # TODO: allow multiple connection
+    my $i2c = Device::Chip::Adapter::FTDI::_I2C->new(
+        ftdi => $self->{ftdi},
+
+        clock_rate => 100E3,
+    );
+
+    $self->{protocol} = $i2c;
+
+    Future->done( $i2c );
+}
+
 package
     Device::Chip::Adapter::FTDI::_SPI;
 
@@ -118,6 +134,55 @@ sub power { Future->done }
 
 sub write     { shift->{spi}->write( @_ ) }
 sub readwrite { shift->{spi}->readwrite( @_ ) }
+
+package
+    Device::Chip::Adapter::FTDI::_I2C;
+
+use Carp;
+
+sub new
+{
+    my $class = shift;
+
+    require Device::FTDI::I2C;
+
+    return bless {
+        i2c => Device::FTDI::I2C->new( @_ ),
+    }, $class;
+}
+
+# TODO - addr ought to be a mount option somehow
+sub configure
+{
+    my $self = shift;
+    my %args = @_;
+
+    my $addr        = delete $args{addr};
+    my $max_bitrate = delete $args{max_bitrate};
+
+    croak "Unrecognised configuration options: " . join( ", ", keys %args )
+        if %args;
+
+    $self->{addr} = $addr if defined $addr;
+    $self->{i2c}->set_clock_rate( $max_bitrate ) if defined $max_bitrate;
+
+    Future->done;
+}
+
+# Basic FTDI has no control of power
+sub power { Future->done }
+
+sub write
+{
+    my $self = shift;
+    $self->{i2c}->write( $self->{addr}, @_ );
+}
+
+sub write_then_read
+{
+    my $self = shift;
+    $self->{i2c}->write_then_read( $self->{addr}, @_ );
+}
 
 =head1 AUTHOR
 
