@@ -11,7 +11,7 @@ use base qw( Device::FTDI::MPSSE );
 
 use utf8;
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 =head1 NAME
 

@@ -1,5 +1,17 @@
 Revision history for Device-FTDI
 
+0.10    2015/11/12 12:10:27
+        [CHANGES]
+         * Implement Device::Chip::Adapter 0.02:
+            + ->new_from_description constructor
+            + I2C protocol
+         * Have Device::Chip::MPSSE be a standalone class that composes a
+           Device::FTDI rather than subclassing it
+
+        [BUGFIXES]
+         * Fix race condition where completed Device::FTDI::MPSSE write futures
+           cause more writes that want more reads
+
 0.09    2015/11/10 00:29:32
         [CHANGES]
          * Implement a Device::Chip::Adapter class

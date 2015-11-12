@@ -9,7 +9,7 @@ use strict;
 use warnings;
 use base qw( Device::FTDI::MPSSE );
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 =head1 NAME
 
