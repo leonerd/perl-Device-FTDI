@@ -629,6 +629,8 @@ package
     Device::FTDI::MPSSE::_Future;
 use base qw( Future );
 
+use constant DEBUG => $ENV{PERL_FTDI_DEBUG} // 0;
+
 use constant CMD_SEND_IMMEDIATE => Device::FTDI::MPSSE::CMD_SEND_IMMEDIATE;
 
 sub new
@@ -655,6 +657,8 @@ sub await
     }
 
     if( length $mpsse->{mpsse_writebuff} ) {
+        printf STDERR "FTDI> %v02X\n", $mpsse->{mpsse_writebuff} if DEBUG > 1;
+
         $mpsse->{ftdi}->write_data( $mpsse->{mpsse_writebuff} );
         $mpsse->{mpsse_writebuff} = "";
 
@@ -666,6 +670,7 @@ sub await
 
     while( $len ) {
         $mpsse->{ftdi}->read_data( my $more, $len );
+        printf STDERR "<FTDI %v02X\n", $more if DEBUG > 1 and length $more;
 
         $recvbuff .= $more;
         $len -= length $more;
