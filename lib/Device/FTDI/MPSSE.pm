@@ -406,32 +406,33 @@ sub readwrite_bits
     $self->_readwrite_bits( $self->{mpsse_cmd_rdwr}, $_[0], $_[1] );
 }
 
-=head2 tris_gpio
-
-    $mpsse->tris_gpio( $port, $dir, $mask )->get
-
-"tristate" the pins on a GPIO port. This method affects only the pins
-specified by the C<$mask> bitmask, on the specified C<$port>. Pins whose
-corresponding bit in C<$dir> is 0 are set to inputs; whose bit is 1 are set
-to outputs. Pins not covered by the mask remain unaffected.
-
 =head2 write_gpio
 
     $mpsse->write_gpio( $port, $val, $mask )->get
 
-Write a new value to the pins on a GPIO port. This method affects only the
-pins specified by the C<$mask> bitmask, on the specified port. Pins not
-covered by the mask remain unaffected. Additionally, any pins whose state has
-been written will additionally need to be set as outputs by the L</tris_gpio>
-method, either before or after this call.
+Write a new value to the pins on a GPIO port, setting them to outputs. This
+method affects only the pins specified by the C<$mask> bitmask, on the
+specified port. Pins not covered by the mask remain unaffected; they remain
+in their previous driven or input state.
 
 =head2 read_gpio
 
-    $val = $mpsse->read_gpio( $port )->get
+    $val = $mpsse->read_gpio( $port, $mask )->get
 
 Reads the state of the pins on a GPIO port. The returned future will yield an
-8-bit integer. The state of any bits corresponding to pins currently
-configured as outputs (by the L</tris_gpio> method) is undefined.
+8-bit integer. This method sets the pins covered by C<$mask> as inputs. Pins
+not covered by the mask remain unaffected; they remain in their previous
+driven or input state.
+
+=head2 tris_gpio
+
+    $mpsse->tris_gpio( $port, $mask )->get
+
+"tristate" the pins on a GPIO port; i.e. set them as high-Z inputs rather than
+driven outputs. This method affects only the pins specified by the C<$mask>
+bitmask, on the specified port. Pin not covered by the mask remain unaffected.
+This is equivalent to C<read_gpio> except that it does not consume an extra
+byte of return value.
 
 In each of the above methods, the GPIO port is specified by one of the
 following exported constants
@@ -450,18 +451,6 @@ sub _mpsse_gpio_set
 
 use constant { VAL => 0, DIR => 1 };
 
-sub tris_gpio
-{
-    my $self = shift;
-    my ( $port, $dir, $mask ) = @_;
-
-    my $state = $self->{mpsse_gpio}[$port];
-
-    ( $state->[1] &= ~$mask ) |= ( $dir & $mask );
-
-    $self->_mpsse_gpio_set( $port, $state->[VAL], $state->[DIR] );
-}
-
 sub write_gpio
 {
     my $self = shift;
@@ -469,7 +458,8 @@ sub write_gpio
 
     my $state = $self->{mpsse_gpio}[$port];
 
-    ( $state->[0] &= ~$mask ) |= ( $val & $mask );
+    ( $state->[VAL] &= ~$mask ) |= ( $val & $mask );
+    ( $state->[DIR] |=  $mask );
 
     $self->_mpsse_gpio_set( $port, $state->[VAL], $state->[DIR] );
 }
@@ -477,11 +467,28 @@ sub write_gpio
 sub read_gpio
 {
     my $self = shift;
-    my ( $port ) = @_;
+    my ( $port, $mask ) = @_;
+
+    my $state = $self->{mpsse_gpio}[$port];
+    if( ( $state->[DIR] & $mask ) != 0 ) {
+        $self->tris_gpio( $port, $mask );
+    }
 
     $self->_send_bytes( pack "C", CMD_GET_DBUS + ( $port * 2 ) );
     $self->_recv_bytes( 1 )
         ->transform( done => sub { unpack "C", $_[0] } );
+}
+
+sub tris_gpio
+{
+    my $self = shift;
+    my ( $port, $mask ) = @_;
+
+    my $state = $self->{mpsse_gpio}[$port];
+
+    $state->[DIR] &= ~$mask;
+
+    $self->_mpsse_gpio_set( $port, $state->[VAL], $state->[DIR] );
 }
 
 =head2 set_loopback
