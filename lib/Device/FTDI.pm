@@ -170,6 +170,11 @@ device serial ID. By default undefined.
 
 device index. By default 0.
 
+=item B<autodie>
+
+if true, methods on this instance will use L<Carp/croak> on failure. if false,
+they will return negative values.
+
 =back
 
 =cut
@@ -180,7 +185,7 @@ sub new {
     $params{product} ||= PID_FT232;
     $params{index} ||= 0;
     my $dev = _open_device($params{vendor}, $params{product}, $params{description}, $params{serial}, $params{index});
-    return bless { _ctx => $dev }, $class;
+    return bless { _ctx => $dev, autodie => $params{autodie} // 0 }, $class;
 }
 
 =pod
@@ -215,6 +220,14 @@ sub error_string {
     return _error_string( shift->{_ctx} );
 }
 
+sub _check
+{
+    my $self = shift;
+    my ( $ret ) = @_;
+    croak $self->error_string if $self->{autodie} and $ret < 0;
+    return $ret;
+}
+
 =head2 reset
 
     $dev->reset
@@ -224,7 +237,8 @@ Resets the device
 =cut
 
 sub reset {
-    return _reset(shift->{_ctx});
+    my $self = shift;
+    return $self->_check( _reset( $self->{_ctx} ) );
 }
 
 =head2 set_interface
@@ -242,46 +256,46 @@ be one of:
 
 sub set_interface {
     my ( $self, $interface ) = @_;
-    return _set_interface( $self->{_ctx}, $interface );
+    return $self->_check( _set_interface( $self->{_ctx}, $interface ) );
 }
 
 =head2 purge_rx_buffer
 
     $dev->purge_rx_buffer
 
-Clears the read buffer on the chip and the internal read buffer. Returns 0 on
-success or negative error code otherwise.
+Clears the read buffer on the chip and the internal read buffer.
 
 =cut
 
 sub purge_rx_buffer {
-    return _purge_rx_buffer(shift->{_ctx});
+    my $self = shift;
+    return $self->_check( _purge_rx_buffer( $self->{_ctx} ) );
 }
 
 =head2 purge_tx_buffer
 
     $dev->purge_tx_buffer
 
-Clears the write buffer on the chip. Returns 0 on success or negative error
-code otherwise.
+Clears the write buffer on the chip.
 
 =cut
 
 sub purge_tx_buffer {
-    return _purge_tx_buffer(shift->{_ctx});
+    my $self = shift;
+    return $self->_check( _purge_tx_buffer( $self->{_ctx} ) );
 }
 
 =head2 purge_buffers
 
     $dev->purge_buffers
 
-Clears the buffers on the chip and the internal read buffer. Returns 0 on
-success or negative error code otherwise.
+Clears the buffers on the chip and the internal read buffer.
 
 =cut
 
 sub purge_buffers {
-    return _purge_buffers(shift->{_ctx});
+    my $self = shift;
+    return $self->_check( _purge_buffers( $self->{_ctx} ) );
 }
 
 =head2 set_flow_control
@@ -296,16 +310,15 @@ Set flow control for ftdi chip. Allowed values for I<$flowctrl> are:
 
 (export tag C<:flow>)
 
-Returns 0 on success or negative error code otherwise.
-
 This method is also available aliased as C<setflowctrl> for back-compatibility
 and to match the name used by F<libftdi> itself.
 
 =cut
 
 sub set_flow_control {
-    my ( $self, $flowctrl ) = @_;
-    return _setflowctrl( $self->{_ctx}, $flowctrl );
+    my $self = shift;
+    my ( $flowctrl ) = @_;
+    return $self->_check( _setflowctrl( $self->{_ctx}, $flowctrl ) );
 }
 *setflowctrl = \&set_flow_control;
 
@@ -347,18 +360,19 @@ acceptable for parameters (* marks default value):
 Note that you have to import constants you need. You can import all constants
 using C<:all> tag, or individual groups using the other named tags.
 
-Returns 0 on success or negative error code otherwise.
-
 =cut
 
 sub set_line_property {
-    my ( $self, $bits, $stop_bit, $parity, $break ) = @_;
+    my $self = shift;
+    my ( $bits, $stop_bit, $parity, $break ) = @_;
     defined($bits)     or $bits     = BITS_8();
     defined($stop_bit) or $stop_bit = STOP_BIT_15();
     defined($parity)   or $parity   = PARITY_NONE();
     defined($break)    or $break    = BREAK_OFF();
 
-    return _set_line_property2( $self->{_ctx}, $bits, $stop_bit, $parity, $break );
+    return $self->_check(
+        _set_line_property2( $self->{_ctx}, $bits, $stop_bit, $parity, $break )
+    );
 }
 
 =head2 set_baudrate
@@ -370,8 +384,9 @@ Sets the chip baudrate. Returns 0 on success or negative error code otherwise.
 =cut
 
 sub set_baudrate {
-    my ($self, $baudrate) = @_;
-    return _set_baudrate($self->{_ctx}, $baudrate);
+    my $self = shift;
+    my ( $baudrate ) = @_;
+    return $self->_check( _set_baudrate( $self->{_ctx}, $baudrate ) );
 }
 
 =head2 set_latency_timer
@@ -387,9 +402,10 @@ Returns 0 on success or negative error code otherwise.
 =cut
 
 sub set_latency_timer {
-    my ( $self, $latency ) = @_;
+    my $self = shift;
+    my ( $latency ) = @_;
     croak "latency must be between 1 and 255" unless $latency >= 1 && $latency <= 255;
-    return _set_latency_timer( $self->{_ctx}, $latency );
+    return $self->_check( _set_latency_timer( $self->{_ctx}, $latency ) );
 }
 
 =head2 get_latency_timer
@@ -401,7 +417,8 @@ Returns latency timer value or negative error code.
 =cut
 
 sub get_latency_timer {
-    return _get_latency_timer( shift->{_ctx} );
+    my $self = shift;
+    return $self->_check( _get_latency_timer( $self->{_ctx} ) );
 }
 
 =head2 write_data_set_chunksize
@@ -414,8 +431,9 @@ negative error code otherwise.
 =cut
 
 sub write_data_set_chunksize {
-    my ( $self, $chunksize ) = @_;
-    return _write_data_set_chunksize( $self->{_ctx}, $chunksize );
+    my $self = shift;
+    my ( $chunksize ) = @_;
+    return $self->_check( _write_data_set_chunksize( $self->{_ctx}, $chunksize ) );
 }
 
 =head2 write_data_get_chunksize
@@ -427,7 +445,8 @@ Returns write buffer chunk size or negative error code.
 =cut
 
 sub write_data_get_chunksize {
-    return _write_data_get_chunksize( shift->{_ctx} );
+    my $self = shift;
+    return $self->_check( _write_data_get_chunksize( $self->{_ctx} ) );
 }
 
 =head2 read_data_set_chunksize
@@ -440,8 +459,9 @@ error code otherwise.
 =cut
 
 sub read_data_set_chunksize {
-    my ( $self, $chunksize ) = @_;
-    return _read_data_set_chunksize( $self->{_ctx}, $chunksize );
+    my $self = shift;
+    my ( $chunksize ) = @_;
+    return $self->_check( _read_data_set_chunksize( $self->{_ctx}, $chunksize ) );
 }
 
 =head2 read_data_get_chunksize
@@ -453,7 +473,8 @@ Returns read buffer chunk size or negative error code.
 =cut
 
 sub read_data_get_chunksize {
-    return _read_data_get_chunksize( shift->{_ctx} );
+    my $self = shift;
+    return $self->_check( _read_data_get_chunksize( $self->{_ctx} ) );
 }
 
 =head2 write_data
@@ -466,8 +487,9 @@ or negative error code otherwise.
 =cut
 
 sub write_data {
-    my ($self, $data) = @_;
-    return _write_data( $self->{_ctx}, $data );
+    my $self = shift;
+    my ( $data ) = @_;
+    return $self->_check( _write_data( $self->{_ctx}, $data ) );
 }
 
 =head2 read_data
@@ -485,8 +507,9 @@ that if no data available it will return 0.
 =cut
 
 sub read_data {
-    my ($self, $size) = @_[0,2];
-    return _read_data( $self->{_ctx}, $_[1], $size);
+    my $self = shift;
+    my ( undef, $size ) = @_;
+    return $self->_check( _read_data( $self->{_ctx}, $_[0], $size ) );
 }
 
 =head2 set_bitmode
@@ -507,8 +530,9 @@ L<Device::FTDI::MPSSE> subclass instead.
 =cut
 
 sub set_bitmode {
-    my ($self, $mask, $mode) = @_;
-    return _set_bitmode($self->{_ctx}, $mask, $mode);
+    my $self = shift;
+    my ( $mask, $mode ) = @_;
+    return $self->_check( _set_bitmode( $self->{_ctx}, $mask, $mode ) );
 }
 
 sub DESTROY {
