@@ -158,6 +158,19 @@ sub set_spi_mode
     $self->write_gpio( DBUS, $idle, SPI_SCK );
 }
 
+# TODO: configurable CS line and sense
+sub assert_cs
+{
+    my $self = shift;
+    $self->write_gpio( DBUS, LOW, SPI_CS );
+}
+
+sub deassert_cs
+{
+    my $self = shift;
+    $self->write_gpio( DBUS, HIGH, SPI_CS );
+}
+
 =head2 write
 
     $spi->write( $bytes )->get
@@ -169,9 +182,9 @@ sub write
     my $self = shift;
     my ( $bytes ) = @_;
 
-    $self->write_gpio( DBUS, LOW, SPI_CS );
+    $self->assert_cs;
     $self->write_bytes( $bytes );
-    $self->write_gpio( DBUS, HIGH, SPI_CS );
+    $self->deassert_cs;
 }
 
 =head2 read
@@ -185,9 +198,9 @@ sub read
     my $self = shift;
     my ( $len ) = @_;
 
-    $self->write_gpio( DBUS, LOW, SPI_CS );
+    $self->assert_cs;
     my $f = $self->read_bytes( $len );
-    $self->write_gpio( DBUS, HIGH, SPI_CS );
+    $self->deassert_cs;
 
     return $f;
 }
@@ -206,9 +219,9 @@ sub readwrite
     my $self = shift;
     my ( $bytes ) = @_;
 
-    $self->write_gpio( DBUS, LOW, SPI_CS );
+    $self->assert_cs;
     my $f = $self->readwrite_bytes( $bytes );
-    $self->write_gpio( DBUS, HIGH, SPI_CS );
+    $self->deassert_cs;
 
     return $f;
 }
