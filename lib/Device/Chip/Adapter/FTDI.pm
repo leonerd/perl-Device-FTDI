@@ -69,6 +69,21 @@ sub new_from_description
 
 sub shutdown { }
 
+sub make_protocol_GPIO
+{
+    my $self = shift;
+
+    require Device::FTDI::MPSSE;
+
+    my $mpsse = Device::Chip::Adapter::FTDI::_base->new(
+        Device::FTDI::MPSSE->new( ftdi => $self->{ftdi} ),
+    );
+
+    $self->{protocol} = $mpsse;
+
+    Future->done( $mpsse );
+}
+
 sub make_protocol_SPI
 {
     my $self = shift;
@@ -98,6 +113,10 @@ sub make_protocol_I2C
 package
     Device::Chip::Adapter::FTDI::_base;
 
+use Carp;
+
+use Device::FTDI::MPSSE qw( DBUS CBUS );
+
 sub new
 {
     my $class = shift;
@@ -110,6 +129,38 @@ sub new
 
 # Basic FTDI has no control of power
 sub power { Future->done }
+
+sub list_gpios
+{
+    return ( map { "D$_" } 0 .. 7 ),
+           ( map { "C$_" } 0 .. 7 );
+}
+
+sub write_gpios
+{
+    my $self = shift;
+    my ( $gpios ) = @_;
+
+    my %val;
+    my %mask;
+
+    foreach my $gpio ( keys %$gpios ) {
+        my ( $bus, $num ) = $gpio =~ m/^([DC])([0-7])$/ or
+            croak "Unrecognised GPIO name $gpio";
+
+        my $bit = 1 << $num;
+
+        $val {$bus} |= $gpios->{$gpio} ? $bit : 0;
+        $mask{$bus} |= $bit;
+    }
+
+    my @f;
+
+    push @f, $self->{mpsse}->write_gpio( DBUS, $val{D}, $mask{D} ) if $mask{D};
+    push @f, $self->{mpsse}->write_gpio( CBUS, $val{C}, $mask{C} ) if $mask{C};
+
+    Future->needs_all( @f );
+}
 
 package
     Device::Chip::Adapter::FTDI::_SPI;
