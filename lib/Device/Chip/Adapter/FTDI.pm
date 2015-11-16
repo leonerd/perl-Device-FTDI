@@ -96,7 +96,24 @@ sub make_protocol_I2C
 }
 
 package
+    Device::Chip::Adapter::FTDI::_base;
+
+sub new
+{
+    my $class = shift;
+    my ( $mpsse ) = @_;
+
+    return bless {
+        mpsse => $mpsse,
+    }, $class;
+}
+
+# Basic FTDI has no control of power
+sub power { Future->done }
+
+package
     Device::Chip::Adapter::FTDI::_SPI;
+use base qw( Device::Chip::Adapter::FTDI::_base );
 
 use Carp;
 
@@ -105,10 +122,7 @@ sub new
     my $class = shift;
 
     require Device::FTDI::SPI;
-
-    return bless {
-        spi => Device::FTDI::SPI->new( @_ ),
-    }, $class;
+    return $class->SUPER::new( Device::FTDI::SPI->new( @_ ) );
 }
 
 sub configure
@@ -122,21 +136,19 @@ sub configure
     croak "Unrecognised configuration options: " . join( ", ", keys %args )
         if %args;
 
-    my $spi = $self->{spi};
+    my $spi = $self->{mpsse};
     $spi->set_spi_mode( $mode )          if defined $mode;
     $spi->set_clock_rate( $max_bitrate ) if defined $max_bitrate;
 
     Future->done;
 }
 
-# Basic FTDI has no control of power
-sub power { Future->done }
-
-sub write     { shift->{spi}->write( @_ ) }
-sub readwrite { shift->{spi}->readwrite( @_ ) }
+sub write     { $_[0]->{mpsse}->write( @_ ) }
+sub readwrite { $_[0]->{mpsse}->readwrite( @_ ) }
 
 package
     Device::Chip::Adapter::FTDI::_I2C;
+use base qw( Device::Chip::Adapter::FTDI::_base );
 
 use Carp;
 
@@ -145,10 +157,7 @@ sub new
     my $class = shift;
 
     require Device::FTDI::I2C;
-
-    return bless {
-        i2c => Device::FTDI::I2C->new( @_ ),
-    }, $class;
+    return $class->SUPER::new( Device::FTDI::I2C->new( @_ ) );
 }
 
 # TODO - addr ought to be a mount option somehow
@@ -164,24 +173,21 @@ sub configure
         if %args;
 
     $self->{addr} = $addr if defined $addr;
-    $self->{i2c}->set_clock_rate( $max_bitrate ) if defined $max_bitrate;
+    $self->{mpsse}->set_clock_rate( $max_bitrate ) if defined $max_bitrate;
 
     Future->done;
 }
 
-# Basic FTDI has no control of power
-sub power { Future->done }
-
 sub write
 {
     my $self = shift;
-    $self->{i2c}->write( $self->{addr}, @_ );
+    $self->{mpsse}->write( $self->{addr}, @_ );
 }
 
 sub write_then_read
 {
     my $self = shift;
-    $self->{i2c}->write_then_read( $self->{addr}, @_ );
+    $self->{mpsse}->write_then_read( $self->{addr}, @_ );
 }
 
 =head1 AUTHOR
