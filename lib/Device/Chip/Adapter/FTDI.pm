@@ -162,6 +162,41 @@ sub write_gpios
     Future->needs_all( @f );
 }
 
+sub read_gpios
+{
+    my $self = shift;
+    my ( $gpios ) = @_;
+
+    my %mask = ( D => 0, C => 0 );
+
+    foreach my $gpio ( @$gpios ) {
+        my ( $bus, $num ) = $gpio =~ m/^([DC])([0-7])$/ or
+            croak "Unrecognised GPIO name $gpio";
+
+        my $bit = 1 << $num;
+
+        $mask{$bus} |= $bit;
+    }
+
+    Future->needs_all(
+        $mask{D} ? $self->{mpsse}->read_gpio( DBUS, $mask{D} ) : Future->done(0),
+        $mask{C} ? $self->{mpsse}->read_gpio( CBUS, $mask{C} ) : Future->done(0),
+    )->then( sub {
+        my ( $dbus, $cbus ) = @_;
+
+        my %vals;
+
+        foreach my $num ( 0 .. 7 ) {
+            my $bit = 1 << $num;
+
+            $vals{"D$num"} = !!( $dbus & $bit ) if $mask{D} & $bit;
+            $vals{"C$num"} = !!( $cbus & $bit ) if $mask{C} & $bit;
+        }
+
+        Future->done( \%vals );
+    });
+}
+
 package
     Device::Chip::Adapter::FTDI::_SPI;
 use base qw( Device::Chip::Adapter::FTDI::_base );
