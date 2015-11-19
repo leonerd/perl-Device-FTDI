@@ -63,6 +63,8 @@ await it themself.
 
 =cut
 
+use Carp;
+
 use Device::FTDI qw( PID_FT232H );
 
 use Exporter 'import';
@@ -291,6 +293,8 @@ sub _readwrite_bytes
     my $self = shift;
     my ( $cmd, $len, $data ) = @_;
 
+    defined $cmd or croak "clock edge sense has not yet been set";
+
     $cmd |= $self->{mpsse_setup};
 
     $data = substr( $data, 0, $len );
@@ -355,6 +359,8 @@ sub _readwrite_bits
 {
     my $self = shift;
     my ( $cmd, $len, $data ) = @_;
+
+    defined $cmd or croak "clock edge sense has not yet been set";
 
     $cmd |= $self->{mpsse_setup} | CMD_BITMODE;
 
