@@ -197,6 +197,28 @@ sub read_gpios
     });
 }
 
+sub tris_gpios
+{
+    my $self = shift;
+    my ( $gpios ) = @_;
+
+    my %mask = ( D => 0, C => 0 );
+
+    foreach my $gpio ( @$gpios ) {
+        my ( $bus, $num ) = $gpio =~ m/^([DC])([0-7])$/ or
+            croak "Unrecognised GPIO name $gpio";
+
+        my $bit = 1 << $num;
+
+        $mask{$bus} |= $bit;
+    }
+
+    Future->needs_all(
+        $mask{D} ? $self->{mpsse}->tris_gpio( DBUS, $mask{D} ) : Future->done(0),
+        $mask{C} ? $self->{mpsse}->tris_gpio( CBUS, $mask{C} ) : Future->done(0),
+    )->then_done();
+}
+
 package
     Device::Chip::Adapter::FTDI::_SPI;
 use base qw( Device::Chip::Adapter::FTDI::_base );
