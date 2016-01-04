@@ -18,7 +18,6 @@ README
 t/00-load.t
 t/ftdi.t
 t/manifest.t
-t/pod-coverage.t
 t/pod.t
 typemap
 util/generate_const.pl
