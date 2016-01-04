@@ -1,4 +1,5 @@
 Changes
+examples/bitbang-tickit-ui.pl
 examples/max7221-clock.pl
 examples/mpl3115a2.pl
 examples/synopsis.pl

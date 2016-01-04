@@ -1,5 +1,14 @@
 Revision history for Device-FTDI
 
+0.11    2016/01/04 15:34:03
+        [CHANGES]
+         * Added 'autodie' feature
+         * Implement the 'GPIO' Device::Chip::Adapter protocol
+
+        [BUGFIXES]
+         * Complain if MPSSE is used without a defined clock edge sense
+         * Try 'libftdi1' as another platform library name (#6)
+
 0.10    2015/11/12 12:10:27
         [CHANGES]
          * Implement Device::Chip::Adapter 0.02:
