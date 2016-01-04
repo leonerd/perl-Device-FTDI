@@ -7,8 +7,8 @@ use ExtUtils::PkgConfig;
 # Check if we have libusb and libftdi installed
 my ( %lusb_cfg, %lftdi_cfg );
 eval {
-    %lusb_cfg  = ExtUtils::PkgConfig->find('libusb');
-    %lftdi_cfg = ExtUtils::PkgConfig->find('libftdi');
+    %lusb_cfg  = ExtUtils::PkgConfig->find(qw( libusb ));
+    %lftdi_cfg = ExtUtils::PkgConfig->find(qw( libftdi libftdi1 ));
 };
 if ( my $err = $@ ) {
     warn $err;
