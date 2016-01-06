@@ -251,8 +251,8 @@ sub configure
     Future->done;
 }
 
-sub write     { $_[0]->{mpsse}->write( @_ ) }
-sub readwrite { $_[0]->{mpsse}->readwrite( @_ ) }
+sub write     { my $self = shift; $self->{mpsse}->write( @_ ) }
+sub readwrite { my $self = shift; $self->{mpsse}->readwrite( @_ ) }
 
 package
     Device::Chip::Adapter::FTDI::_I2C;
