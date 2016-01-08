@@ -35,7 +35,7 @@ use constant {
     SPI_SCK  => (1<<0),
     SPI_MOSI => (1<<1),
     SPI_MISO => (1<<2),
-    SPI_CS   => (1<<3),
+    SPI_SS   => (1<<3),
 };
 
 use constant { HIGH => 0xff, LOW => 0 };
@@ -78,7 +78,7 @@ sub new
 
     $self->set_open_collector( 0, 0 );
 
-    $self->write_gpio( DBUS, HIGH, SPI_CS );
+    $self->write_gpio( DBUS, HIGH, SPI_SS );
 
     return $self;
 }
@@ -158,17 +158,17 @@ sub set_spi_mode
     $self->write_gpio( DBUS, $idle, SPI_SCK );
 }
 
-# TODO: configurable CS line and sense
-sub assert_cs
+# TODO: configurable SS line and sense
+sub assert_ss
 {
     my $self = shift;
-    $self->write_gpio( DBUS, LOW, SPI_CS );
+    $self->write_gpio( DBUS, LOW, SPI_SS );
 }
 
-sub deassert_cs
+sub deassert_ss
 {
     my $self = shift;
-    $self->write_gpio( DBUS, HIGH, SPI_CS );
+    $self->write_gpio( DBUS, HIGH, SPI_SS );
 }
 
 =head2 write
@@ -182,9 +182,9 @@ sub write
     my $self = shift;
     my ( $bytes ) = @_;
 
-    $self->assert_cs;
+    $self->assert_ss;
     $self->write_bytes( $bytes );
-    $self->deassert_cs;
+    $self->deassert_ss;
 }
 
 =head2 read
@@ -198,9 +198,9 @@ sub read
     my $self = shift;
     my ( $len ) = @_;
 
-    $self->assert_cs;
+    $self->assert_ss;
     my $f = $self->read_bytes( $len );
-    $self->deassert_cs;
+    $self->deassert_ss;
 
     return $f;
 }
@@ -210,7 +210,7 @@ sub read
     $bytes_in = $spi->readwrite( $bytes_out )->get;
 
 Performs a full SPI write, or read-and-write operation, consisting of
-asserting the C<CS> pin, transferring bytes, and deasserting it again.
+asserting the C<SS> pin, transferring bytes, and deasserting it again.
 
 =cut
 
@@ -219,9 +219,9 @@ sub readwrite
     my $self = shift;
     my ( $bytes ) = @_;
 
-    $self->assert_cs;
+    $self->assert_ss;
     my $f = $self->readwrite_bytes( $bytes );
-    $self->deassert_cs;
+    $self->deassert_ss;
 
     return $f;
 }
