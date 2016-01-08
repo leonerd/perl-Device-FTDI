@@ -158,6 +158,22 @@ sub set_spi_mode
     $self->write_gpio( DBUS, $idle, SPI_SCK );
 }
 
+=head2 assert_ss
+
+=head2 release_ss
+
+    $spi->assert_ss->get
+
+    $spi->release_ss->get
+
+Set the C<SS> GPIO pin to LOW or HIGH state respectively. Normally these
+methods would not be required, as L</read>, L</write> and L</readwrite>
+perform these steps automatically. However, they may be useful when combined
+with the lower-level L<Device::FTDI::MPSSE/readwrite_bytes> method to split
+an SPI transaction over multiple method calls.
+
+=cut
+
 # TODO: configurable SS line and sense
 sub assert_ss
 {
@@ -165,7 +181,7 @@ sub assert_ss
     $self->write_gpio( DBUS, LOW, SPI_SS );
 }
 
-sub deassert_ss
+sub release_ss
 {
     my $self = shift;
     $self->write_gpio( DBUS, HIGH, SPI_SS );
@@ -184,7 +200,7 @@ sub write
 
     $self->assert_ss;
     $self->write_bytes( $bytes );
-    $self->deassert_ss;
+    $self->release_ss;
 }
 
 =head2 read
@@ -200,7 +216,7 @@ sub read
 
     $self->assert_ss;
     my $f = $self->read_bytes( $len );
-    $self->deassert_ss;
+    $self->release_ss;
 
     return $f;
 }
@@ -221,7 +237,7 @@ sub readwrite
 
     $self->assert_ss;
     my $f = $self->readwrite_bytes( $bytes );
-    $self->deassert_ss;
+    $self->release_ss;
 
     return $f;
 }
