@@ -4,10 +4,9 @@ use warnings;
 use ExtUtils::MakeMaker;
 use ExtUtils::PkgConfig;
 
-# Check if we have libusb and libftdi installed
-my ( %lusb_cfg, %lftdi_cfg );
+# Check if we have libftdi installed
+my %lftdi_cfg;
 eval {
-    %lusb_cfg  = ExtUtils::PkgConfig->find(qw( libusb ));
     %lftdi_cfg = ExtUtils::PkgConfig->find(qw( libftdi libftdi1 ));
 };
 if ( my $err = $@ ) {
@@ -20,8 +19,8 @@ WriteMakefile(
     AUTHOR        => 'Paul "LeoNerd" Evans <leonerd@leonerd.org.uk>',
     VERSION_FROM  => 'lib/Device/FTDI.pm',
     ABSTRACT      => 'use USB-attached serial interface chips from FTDI',
-    INC           => "$lusb_cfg{cflags} $lftdi_cfg{cflags}",
-    LIBS          => ["$lusb_cfg{libs} $lftdi_cfg{libs}"],
+    INC           => $lftdi_cfg{cflags},
+    LIBS          => [ $lftdi_cfg{libs} ],
     ( $ExtUtils::MakeMaker::VERSION >= 6.3002
         ? ( 'LICENSE' => 'perl' )
         : () ),
