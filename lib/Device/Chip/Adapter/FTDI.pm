@@ -254,6 +254,12 @@ sub configure
 sub write     { my $self = shift; $self->{mpsse}->write( @_ ) }
 sub readwrite { my $self = shift; $self->{mpsse}->readwrite( @_ ) }
 
+sub assert_ss  { my $self = shift; $self->{mpsse}->assert_ss }
+sub release_ss { my $self = shift; $self->{mpsse}->release_ss }
+
+sub write_no_ss     { my $self = shift; $self->{mpsse}->write_bytes( @_ ) }
+sub readwrite_no_ss { my $self = shift; $self->{mpsse}->readwrite_bytes( @_ ) }
+
 package
     Device::Chip::Adapter::FTDI::_I2C;
 use base qw( Device::Chip::Adapter::FTDI::_base );
