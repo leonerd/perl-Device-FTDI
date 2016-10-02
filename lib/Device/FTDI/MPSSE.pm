@@ -745,6 +745,17 @@ sub await
     }
 }
 
+=head1 TODO
+
+=over 4
+
+=item *
+
+Implement future await semantics when pending read and alarms are both
+present. This will require working out how F<libftdi> works with timeouts.
+
+=back
+
 =head1 AUTHOR
 
 Paul Evans <leonerd@leonerd.org.uk>
