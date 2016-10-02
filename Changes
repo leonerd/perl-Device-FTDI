@@ -1,5 +1,19 @@
 Revision history for Device-FTDI
 
+0.12    2016/10/02 22:18:57
+        [CHANGES]
+         * Rename 'CS' to 'SS' in the SPI subclass
+         * Expose and document methods in SPI subclass for interacting
+           directly with the SS pin
+         * Define methods required for Device::Chip's split-transaction SPI
+         * Add I2C read method
+         * Add sleep method
+
+        [BUGFIXES]
+         * Ensure that failed recv still sends I²C STOP condition
+         * Bugfix to Device::Chip::Adapter SPI protocol implementation to
+           allow ->read and ->readwrite to actually work
+
 0.11    2016/01/04 15:34:03
         [CHANGES]
          * Added 'autodie' feature
