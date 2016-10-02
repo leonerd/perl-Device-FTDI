@@ -33,6 +33,8 @@ use Device::FTDI::MPSSE qw(
 
 use Future::Utils qw( repeat );
 
+use constant DEBUG => $ENV{PERL_FTDI_DEBUG} // 0;
+
 use constant {
     I2C_SCL     => (1<<0),
     I2C_SDA_OUT => (1<<1),
@@ -179,6 +181,8 @@ sub i2c_start
 {
     my $self = shift;
 
+    print STDERR "FTDI MPSSE I2C START\n" if DEBUG;
+
     my $f;
 
     # S&H delay
@@ -192,6 +196,8 @@ sub i2c_repeated_start
 {
     my $self = shift;
 
+    print STDERR "FTDI MPSSE I2C REPEAT-START\n" if DEBUG;
+
     # Release the lines without appearing as STOP
     $self->write_gpio( DBUS, HIGH, I2C_SDA_OUT ) for 1 .. 10;
     $self->write_gpio( DBUS, HIGH, I2C_SCL ) for 1 .. 10;
@@ -202,6 +208,8 @@ sub i2c_repeated_start
 sub i2c_stop
 {
     my $self = shift;
+
+    print STDERR "FTDI MPSSE I2C STOP\n" if DEBUG;
 
     my $f;
 
@@ -218,6 +226,8 @@ sub i2c_send
 {
     my $self = shift;
     my ( $data, $more_f ) = @_;
+
+    printf STDERR "FTDI MPSSE I2C SEND %v02X\n", $data if DEBUG;
 
     my $check = $self->{i2c_check_mode};
 
@@ -255,6 +265,8 @@ sub i2c_sendaddr
     my $self = shift;
     my ( $addr, $rd, $more_f ) = @_;
 
+    printf STDERR "FTDI MPSSE I2C ADDR %02X %s\n", $addr, $rd ? "R" : "W" if DEBUG;
+
     my $check = $self->{i2c_check_mode};
 
     $self->write_bytes( pack "C", $rd | $addr << 1 );
@@ -290,6 +302,8 @@ sub i2c_recv
     foreach my $ack ( ( 1 ) x ( $len - 1 ), 0 ) {
         $f = $self->read_bytes( 1 )
             ->on_done( sub { $data_in .= $_[0] } );
+
+        $f->on_done( sub { printf STDERR "FTDI MPSSE I2C READ %v02X\n", $_[0] } ) if DEBUG;
 
         $self->write_bits( 1, chr( $ack ? LOW : HIGH ) );
         # Release SDA
