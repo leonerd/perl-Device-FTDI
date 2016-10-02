@@ -304,6 +304,7 @@ sub i2c_recv
             ->on_done( sub { $data_in .= $_[0] } );
 
         $f->on_done( sub { printf STDERR "FTDI MPSSE I2C READ %v02X\n", $_[0] } ) if DEBUG;
+        $f->on_fail( sub { printf STDERR "FTDI MPSSE I2C READ FAILED\n" } ) if DEBUG;
 
         $self->write_bits( 1, chr( $ack ? LOW : HIGH ) );
         # Release SDA
@@ -338,8 +339,10 @@ sub write
     $self->i2c_sendaddr( $addr, WRITE, \@more_f )
     ->then( sub {
         $self->i2c_send( $data, \@more_f )
-    })->then( sub {
-        my $f = $self->i2c_stop;
+    })->followed_by( sub {
+        my ( $f ) = @_;
+
+        $self->i2c_stop;
 
         return $f unless @more_f;
         Future->needs_all( @more_f )->then( sub { $f } );
@@ -403,11 +406,11 @@ sub write_then_read
         $self->i2c_sendaddr( $addr, READ, \@more_f )
     })->then( sub {
         $self->i2c_recv( $len_in );
-    })->then( sub {
-        my ( $data_in ) = @_;
+    })->followed_by( sub {
+        my ( $f ) = @_;
 
         Future->needs_all( $self->i2c_stop, @more_f )
-            ->then_done( $data_in );
+            ->then( sub { $f } );
     });
 }
 
