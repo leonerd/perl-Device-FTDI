@@ -66,6 +66,7 @@ await it themself.
 use Carp;
 
 use Device::FTDI qw( PID_FT232H );
+use Time::HiRes qw( time );
 
 use Exporter 'import';
 
@@ -124,6 +125,7 @@ sub new
     $self->set_open_collector( 0, 0 );
 
     $self->{mpsse_writebuff} = "";
+    $self->{mpsse_alarms} = [];
 
     $self->{mpsse_setup} = 0;
 
@@ -638,9 +640,41 @@ sub _recv_bytes
     return $f;
 }
 
+=head2 sleep
+
+    $mpsse->sleep( $secs )->get
+
+Returns a future that becomes done after the given delay time, in (fractional)
+seconds.
+
+Note that this method is currently experimental, and only behaves correctly
+when either a read future I<or> a sleep future are outstanding. If there are
+both then the current implementation will fail with an exception.
+
+=cut
+
+sub sleep
+{
+    my $self = shift;
+    my ( $secs ) = @_;
+
+    my $until = time() + $secs;
+
+    my $f = Device::FTDI::MPSSE::_Future->new( $self );
+    my $alarm = [ $until, $f ];
+
+    my $alarms = $self->{mpsse_alarms};
+    my $pos = 0;
+    $pos++ while $alarms->[$pos] and $alarms->[$pos][0] < $until;
+    splice @$alarms, $pos, 0, $alarm;
+
+    return $f;
+}
+
 package
     Device::FTDI::MPSSE::_Future;
 use base qw( Future );
+use Time::HiRes qw( sleep time );
 
 use constant DEBUG => $ENV{PERL_FTDI_DEBUG} // 0;
 
@@ -681,7 +715,23 @@ sub await
     my $recvbuff = "";
     my $recv_f = $mpsse->{mpsse_recv_f};
 
+    my $alarms = $mpsse->{mpsse_alarms};
+
+    if( !$len and @$alarms ) {
+        sleep( $alarms->[0][0] - time() );
+        my $now = time();
+
+        while( @$alarms and $alarms->[0][0] <= $now ) {
+            my $alarm = shift @$alarms;
+            $alarm->[1]->done();
+        }
+
+        return;
+    }
+
     while( $len ) {
+        die "TODO: read with sleep/alarm" if @$alarms;
+
         $mpsse->{ftdi}->read_data( my $more, $len );
         printf STDERR "<FTDI %v02X\n", $more if DEBUG > 1 and length $more;
 

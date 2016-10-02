@@ -127,6 +127,12 @@ sub new
     }, $class;
 }
 
+sub sleep
+{
+    my $self = shift;
+    $self->{mpsse}->sleep( @_ );
+}
+
 # Basic FTDI has no control of power
 sub power { Future->done }
 
