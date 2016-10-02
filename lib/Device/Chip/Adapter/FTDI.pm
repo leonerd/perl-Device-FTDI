@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2015 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2015-2016 -- leonerd@leonerd.org.uk
 
 package Device::Chip::Adapter::FTDI;
 
@@ -296,6 +296,12 @@ sub write
 {
     my $self = shift;
     $self->{mpsse}->write( $self->{addr}, @_ );
+}
+
+sub read
+{
+    my $self = shift;
+    $self->{mpsse}->read( $self->{addr}, @_ );
 }
 
 sub write_then_read

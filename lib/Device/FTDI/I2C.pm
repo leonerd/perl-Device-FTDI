@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2015 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2015-2016 -- leonerd@leonerd.org.uk
 
 package Device::FTDI::I2C;
 
@@ -346,19 +346,36 @@ sub write
     });
 }
 
+=head2 read
+
+    $data_in = $i2c->read( $addr, $len_in )->get
+
+Performs an I²C read operation to the chip at the given (7-bit) address
+value.
+
+The device sends a start condition, then a command to address the chip for
+reading. It then attempts to read up to the given number of bytes of input
+from the chip, sending an C<ACK> condition to all but the final byte, to which
+it sends C<NACK>, then finally a stop condition.
+
+=cut
+
+sub read
+{
+    my $self = shift;
+    my ( $addr, $len_in ) = @_;
+    $self->write_then_read( $addr, "", $len_in );
+}
+
 =head2 write_then_read
 
     $data_in = $i2c->write_then_read( $addr, $data_out, $len_in )->get
 
 Performs an I²C write operation followed by a read operation within the same
-transaction to the chip at the given (7-bit) address value.
-
-The device sends a start condition, then a command to address the chip for
-writing, followed by the bytes given in the data to output, then a repeated
-repeated start condition, then a command to address the chip for reading. It
-then attempts to read up to the given number of bytes of input from the chip,
-sending an C<ACK> condition to all but the final byte, to which it sends
-C<NACK>, and then finally a stop condition.
+transaction to the chip at the given (7-bit) address value. This is roughly
+equivalent to performing separate calls to L</write> and L</read> except that
+the two will be combined into a single I²C transaction using a repeated start
+condition.
 
 =cut
 
@@ -371,11 +388,18 @@ sub write_then_read
 
     my @more_f;
 
-    $self->i2c_sendaddr( $addr, WRITE, \@more_f )
-    ->then( sub {
-        $self->i2c_send( $data_out, \@more_f );
-    })->then( sub {
-        $self->i2c_repeated_start;
+    my $f = Future->done;
+
+    if( length $data_out ) {
+        $f = $self->i2c_sendaddr( $addr, WRITE, \@more_f )
+        ->then( sub {
+            $self->i2c_send( $data_out, \@more_f );
+        })->then( sub {
+            $self->i2c_repeated_start;
+        });
+    }
+
+    $f->then( sub {
         $self->i2c_sendaddr( $addr, READ, \@more_f )
     })->then( sub {
         $self->i2c_recv( $len_in );
