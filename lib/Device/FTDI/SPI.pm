@@ -31,6 +31,8 @@ use Device::FTDI::MPSSE qw(
 
 use Carp;
 
+use constant DEBUG => $ENV{PERL_FTDI_DEBUG} // 0;
+
 use constant {
     SPI_SCK  => (1<<0),
     SPI_MOSI => (1<<1),
@@ -178,12 +180,17 @@ an SPI transaction over multiple method calls.
 sub assert_ss
 {
     my $self = shift;
+
+    print STDERR "FTDI MPSSE SPI ASSERT-SS\n" if DEBUG;
+
     $self->write_gpio( DBUS, LOW, SPI_SS );
 }
 
 sub release_ss
 {
     my $self = shift;
+
+    print STDERR "FTDI MPSSE SPI RELEASE-SS\n" if DEBUG;
     $self->write_gpio( DBUS, HIGH, SPI_SS );
 }
 
@@ -199,7 +206,10 @@ sub write
     my ( $bytes ) = @_;
 
     $self->assert_ss;
+
+    printf STDERR "FTDI MPSSE SPI WRITE> %v.02X\n", $bytes;
     $self->write_bytes( $bytes );
+
     $self->release_ss;
 }
 
@@ -217,6 +227,8 @@ sub read
     $self->assert_ss;
     my $f = $self->read_bytes( $len );
     $self->release_ss;
+
+    $f->on_done( sub { printf STDERR "FTDI MPSSE SPI READ <%v.02X\n", $_[0] } ) if DEBUG;
 
     return $f;
 }
@@ -236,8 +248,13 @@ sub readwrite
     my ( $bytes ) = @_;
 
     $self->assert_ss;
+
+    printf STDERR "FTDI MPSSE SPI READWRITE> %v.02X\n", $bytes if DEBUG;
     my $f = $self->readwrite_bytes( $bytes );
+
     $self->release_ss;
+
+    $f->on_done( sub { printf STDERR "FTDI MPSSE SPI READWRITE <%v.02X\n", $_[0] } ) if DEBUG;
 
     return $f;
 }
