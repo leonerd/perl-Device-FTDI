@@ -349,7 +349,7 @@ acceptable for parameters (* marks default value):
 
 (export tag C<:parity>)
 
-=item B<$parity>
+=item B<$break>
 
     BREAK_OFF (*), BREAK_ON
 
