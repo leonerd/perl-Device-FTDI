@@ -234,7 +234,7 @@ sub i2c_send
     repeat {
         my ( $byte ) = @_;
 
-        $self->write_bytes( $byte );
+        $self->write_bits( 8, $byte );
         # Release SDA
         $self->write_gpio( DBUS, HIGH, I2C_SDA_OUT );
 
@@ -269,7 +269,7 @@ sub i2c_sendaddr
 
     my $check = $self->{i2c_check_mode};
 
-    $self->write_bytes( pack "C", $rd | $addr << 1 );
+    $self->write_bits( 8, pack "C", $rd | $addr << 1 );
     # Release SDA
     $self->write_gpio( DBUS, HIGH, I2C_SDA_OUT );
 
