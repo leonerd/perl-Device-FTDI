@@ -1,12 +1,13 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2015 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2015-2017 -- leonerd@leonerd.org.uk
 
 package Device::FTDI::MPSSE;
 
 use strict;
 use warnings;
+use 5.010; # //
 
 our $VERSION = '0.12';
 
