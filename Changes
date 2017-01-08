@@ -1,5 +1,14 @@
 Revision history for Device-FTDI
 
+0.13    2017/01/08 23:41:06
+        [CHANGES]
+         * Add debugging prints to SPI MPSSE subclass
+         * Improved I²C transfer speed
+
+        [BUGFIXES]
+         * Split writes longer than 1024 bytes into chunks to avoid stalling
+           the device on buffer overruns
+
 0.12    2016/10/02 22:18:57
         [CHANGES]
          * Rename 'CS' to 'SS' in the SPI subclass
