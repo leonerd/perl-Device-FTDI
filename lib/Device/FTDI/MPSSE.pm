@@ -11,6 +11,15 @@ use 5.010; # //
 
 our $VERSION = '0.12';
 
+# Testing on my FT232H board suggests that the MPSSE gets upset and stalls if
+#   you write more than 1024 bytes at once.
+use constant MAX_WRITE_BUFFSIZE => 1024;
+
+use constant {
+    BUF_WRITE => 0,
+    BUF_WRITTEN_F => 1,
+};
+
 =head1 NAME
 
 =encoding UTF-8
@@ -125,7 +134,7 @@ sub new
     $self->set_loopback( 0 );
     $self->set_open_collector( 0, 0 );
 
-    $self->{mpsse_writebuff} = "";
+    $self->{mpsse_buffers} = [];
     $self->{mpsse_alarms} = [];
 
     $self->{mpsse_setup} = 0;
@@ -621,11 +630,19 @@ sub _send_bytes
     my $self = shift;
     my ( $bytes ) = @_;
 
-    # TODO: bounds-check the buffer
-    $self->{mpsse_writebuff} .= $bytes;
+    my $buf = $self->{mpsse_buffers}[-1] ||
+        ( $self->{mpsse_buffers}[0] = [ "", [] ] );
+
+    if( length( $buf->[BUF_WRITE] ) + length( $bytes ) > MAX_WRITE_BUFFSIZE-1 ) {
+        # Split to a new buffer
+        push @{ $self->{mpsse_buffers} }, [ "", [] ];
+        $buf = $self->{mpsse_buffers}[-1];
+    }
+
+    $buf->[BUF_WRITE] .= $bytes;
 
     my $f = Device::FTDI::MPSSE::_Future->new( $self );
-    push @{ $self->{mpsse_send_f} }, $f;
+    push @{ $buf->[BUF_WRITTEN_F] }, $f;
     return $f;
 }
 
@@ -681,6 +698,11 @@ use constant DEBUG => $ENV{PERL_FTDI_DEBUG} // 0;
 
 use constant CMD_SEND_IMMEDIATE => Device::FTDI::MPSSE::CMD_SEND_IMMEDIATE;
 
+use constant {
+    BUF_WRITE => Device::FTDI::MPSSE::BUF_WRITE,
+    BUF_WRITTEN_F => Device::FTDI::MPSSE::BUF_WRITTEN_F,
+};
+
 sub new
 {
     my $proto = shift;
@@ -691,26 +713,33 @@ sub new
     return $self;
 }
 
+sub _flush_buffer
+{
+    my $self = shift;
+    my ( $buf ) = @_;
+
+    my $bytes = $buf->[BUF_WRITE];
+
+    $bytes .= pack "C", CMD_SEND_IMMEDIATE if $self->{mpsse}{mpsse_recv_len};
+
+    printf STDERR "FTDI> %v02X\n", $bytes if DEBUG > 1;
+
+    my $ftdi = $self->{mpsse}{ftdi};
+    $ftdi->write_data( $bytes );
+
+    $_->done() for @{ $buf->[BUF_WRITTEN_F] };
+}
+
 sub await
 {
     my $self = shift;
 
     my $mpsse = $self->{mpsse};
 
-    my $len = $mpsse->{mpsse_recv_len};
-    $mpsse->{mpsse_recv_len} = 0;
+    my $buffers = $mpsse->{mpsse_buffers};
 
-    if( $len ) {
-        $mpsse->{mpsse_writebuff} .= pack "C", CMD_SEND_IMMEDIATE;
-    }
-
-    if( length $mpsse->{mpsse_writebuff} ) {
-        printf STDERR "FTDI> %v02X\n", $mpsse->{mpsse_writebuff} if DEBUG > 1;
-
-        $mpsse->{ftdi}->write_data( $mpsse->{mpsse_writebuff} );
-        $mpsse->{mpsse_writebuff} = "";
-
-        $_->done() for splice @{ $mpsse->{mpsse_send_f} };
+    if( @$buffers ) {
+        $self->_flush_buffer( shift @$buffers );
     }
 
     my $recvbuff = "";
@@ -718,7 +747,7 @@ sub await
 
     my $alarms = $mpsse->{mpsse_alarms};
 
-    if( !$len and @$alarms ) {
+    if( !$mpsse->{mpsse_recv_len} and @$alarms ) {
         sleep( $alarms->[0][0] - time() );
         my $now = time();
 
@@ -730,19 +759,23 @@ sub await
         return;
     }
 
-    while( $len ) {
+    while( $mpsse->{mpsse_recv_len} ) {
         die "TODO: read with sleep/alarm" if @$alarms;
 
-        $mpsse->{ftdi}->read_data( my $more, $len );
-        printf STDERR "<FTDI %v02X\n", $more if DEBUG > 1 and length $more;
+        $mpsse->{ftdi}->read_data( my $more, $mpsse->{mpsse_recv_len} );
+        redo if !length $more;
+
+        printf STDERR "<FTDI %v02X\n", $more if DEBUG > 1;
 
         $recvbuff .= $more;
-        $len -= length $more;
+        $mpsse->{mpsse_recv_len} -= length $more;
 
         while( @$recv_f and length $recvbuff >= $recv_f->[0][0] ) {
             my ( $len, $f ) = @{ shift @$recv_f };
             $f->done( substr $recvbuff, 0, $len, "" );
         }
+
+        last if @$buffers; # Stop early to let another write round happen
     }
 }
 
