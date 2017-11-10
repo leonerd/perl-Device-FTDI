@@ -207,7 +207,7 @@ sub write
 
     $self->assert_ss;
 
-    printf STDERR "FTDI MPSSE SPI WRITE> %v.02X\n", $bytes;
+    printf STDERR "FTDI MPSSE SPI WRITE> %v.02X\n", $bytes if DEBUG;
     $self->write_bytes( $bytes );
 
     $self->release_ss;
