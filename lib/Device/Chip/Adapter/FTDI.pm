@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2015-2016 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2015-2018 -- leonerd@leonerd.org.uk
 
 package Device::Chip::Adapter::FTDI;
 
@@ -246,6 +246,7 @@ sub configure
 
     my $mode        = delete $args{mode};
     my $max_bitrate = delete $args{max_bitrate};
+    my $wordsize    = delete $args{wordsize};
 
     croak "Unrecognised configuration options: " . join( ", ", keys %args )
         if %args;
@@ -253,6 +254,7 @@ sub configure
     my $spi = $self->{mpsse};
     $spi->set_spi_mode( $mode )          if defined $mode;
     $spi->set_clock_rate( $max_bitrate ) if defined $max_bitrate;
+    $spi->set_wordsize( $wordsize )      if defined $wordsize;
 
     Future->done;
 }
