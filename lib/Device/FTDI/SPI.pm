@@ -1,7 +1,7 @@
 #  You may distribute under the terms of either the GNU General Public License
 #  or the Artistic License (the same terms as Perl itself)
 #
-#  (C) Paul Evans, 2015 -- leonerd@leonerd.org.uk
+#  (C) Paul Evans, 2015-2018 -- leonerd@leonerd.org.uk
 
 package Device::FTDI::SPI;
 
@@ -171,8 +171,8 @@ sub set_spi_mode
 Set the C<SS> GPIO pin to LOW or HIGH state respectively. Normally these
 methods would not be required, as L</read>, L</write> and L</readwrite>
 perform these steps automatically. However, they may be useful when combined
-with the lower-level L<Device::FTDI::MPSSE/readwrite_bytes> method to split
-an SPI transaction over multiple method calls.
+with the C<$no_ss> argument to split an SPI transaction over multiple method
+calls.
 
 =cut
 
@@ -196,37 +196,39 @@ sub release_ss
 
 =head2 write
 
-    $spi->write( $bytes )->get
+    $spi->write( $bytes, $no_ss )->get
 
 =cut
 
 sub write
 {
     my $self = shift;
-    my ( $bytes ) = @_;
+    my ( $bytes, $no_ss ) = @_;
 
-    $self->assert_ss;
+    $self->assert_ss unless $no_ss;
 
     printf STDERR "FTDI MPSSE SPI WRITE> %v.02X\n", $bytes if DEBUG;
     $self->write_bytes( $bytes );
 
-    $self->release_ss;
+    $self->release_ss unless $no_ss;
 }
 
 =head2 read
 
-    $bytes = $spi->read( $len )->get;
+    $bytes = $spi->read( $len, $no_ss )->get;
 
 =cut
 
 sub read
 {
     my $self = shift;
-    my ( $len ) = @_;
+    my ( $len, $no_ss ) = @_;
 
-    $self->assert_ss;
+    $self->assert_ss unless $no_ss;
+
     my $f = $self->read_bytes( $len );
-    $self->release_ss;
+
+    $self->release_ss unless $no_ss;
 
     $f->on_done( sub { printf STDERR "FTDI MPSSE SPI READ <%v.02X\n", $_[0] } ) if DEBUG;
 
@@ -235,24 +237,28 @@ sub read
 
 =head2 readwrite
 
-    $bytes_in = $spi->readwrite( $bytes_out )->get;
+    $bytes_in = $spi->readwrite( $bytes_out, $no_ss )->get;
 
 Performs a full SPI write, or read-and-write operation, consisting of
 asserting the C<SS> pin, transferring bytes, and deasserting it again.
+
+If the optional C<$no_ss> argument is true, then the C<SS> pin will not be
+adjusted. This is useful for combining multiple write or read operations into
+one SPI transaction.
 
 =cut
 
 sub readwrite
 {
     my $self = shift;
-    my ( $bytes ) = @_;
+    my ( $bytes, $no_ss ) = @_;
 
-    $self->assert_ss;
+    $self->assert_ss unless $no_ss;
 
     printf STDERR "FTDI MPSSE SPI READWRITE> %v.02X\n", $bytes if DEBUG;
     my $f = $self->readwrite_bytes( $bytes );
 
-    $self->release_ss;
+    $self->release_ss unless $no_ss;
 
     $f->on_done( sub { printf STDERR "FTDI MPSSE SPI READWRITE <%v.02X\n", $_[0] } ) if DEBUG;
 

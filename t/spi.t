@@ -71,4 +71,17 @@ is_write
     is( scalar $f->get, "\xA5\x5A", '$f->get for readwrite' );
 }
 
+# readwrite without SS
+{
+    my $f = $spi->readwrite( "\xAA\x55", "NO_SS" );
+
+    is_writeread
+        "\x31\x01\x00\xAA\x55" . # CMD_WRITE|CMD_READ|CMD_CLK_ON_WRITE len=2
+            "\x87",              # CMD_SEND_IMMEDIATE
+        "\xA5\x5A",
+        'write_data for readwrite with NO_SS';
+
+    is( scalar $f->get, "\xA5\x5A", '$f->get for readwrite with NO_SS' );
+}
+
 done_testing;
