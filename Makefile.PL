@@ -29,6 +29,7 @@ WriteMakefile(
         'Device::Chip::Adapter' => '0.02',
         'Future'                => 0,
         'Test::More'            => 0,
+        'Test::HexString'       => 0,
     },
     CONFIGURE_REQUIRES => { 'ExtUtils::PkgConfig' => 0, },
     BUILD_REQUIRES     => { 'Test::More' => 0.94, },
