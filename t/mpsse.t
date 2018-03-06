@@ -74,7 +74,31 @@ is_write
         "\x5A\xA5",
         'write_data for read_bytes';
 
-    is( scalar $f->get, "\x5A\xA5" );
+    is( scalar $f->get, "\x5A\xA5", '$f->get for read_bytes' );
+}
+
+# write_bits
+{
+    my $f = $mpsse->write_bits( 4, "\x5A" );
+
+    is_write
+        "\x13\x03\x5A", # CMD_WRITE|CMD_BITMODE|CMD_CLK_ON_WRITE len=4
+        'write_data for write_bits';
+
+    is( scalar $f->get, undef, '$f->get' );
+}
+
+# read_bits
+{
+    my $f = $mpsse->read_bits( 4 );
+
+    is_writeread
+        "\x22\x03" . # CMD_READ|CMD_BITMODE len=4
+            "\x87",  # CMD_SEND_IMMEDIATE
+        "\x05",
+        'write_data for read_bits';
+
+    is( scalar $f->get, "\x50", '$f->get for read_bits' );
 }
 
 done_testing;
