@@ -30,7 +30,7 @@ is_write
     my $f = $mpsse->write_bytes( "\x55\xAA" );
 
     is_write
-        "\x11\x01\x00\x55\xAA", # CMD_WRITE|CMD_CLK_ON_WRITE len=1
+        "\x11\x01\x00\x55\xAA", # CMD_WRITE|CMD_CLK_ON_WRITE len=2
         'write_data for write_bytes';
 
     is( scalar $f->get, undef, '$f->get' );
