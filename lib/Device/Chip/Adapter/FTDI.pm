@@ -227,7 +227,7 @@ sub tris_gpios
 
 package
     Device::Chip::Adapter::FTDI::_SPI;
-use base qw( Device::Chip::Adapter::FTDI::_base );
+use base qw( Device::Chip::Adapter::FTDI::_base Device::Chip::ProtocolBase::SPI );
 
 use Carp;
 
