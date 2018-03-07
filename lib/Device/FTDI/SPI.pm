@@ -338,10 +338,12 @@ sub write
     printf STDERR "FTDI MPSSE SPI WRITE> %v.02X\n", $words if DEBUG;
 
     my ( $bytes, $bitlen, $bits ) = $self->_reshape_words_out( $words );
-    $self->write_bytes( $bytes );
-    $self->write_bits( $bitlen, $bits ) if $bitlen;
+    my $f = $self->write_bytes( $bytes );
+    $f = $self->write_bits( $bitlen, $bits ) if $bitlen;
 
-    $self->release_ss unless $no_ss;
+    $f = $self->release_ss unless $no_ss;
+
+    return $f;
 }
 
 =head2 read
