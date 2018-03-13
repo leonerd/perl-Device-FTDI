@@ -9,6 +9,8 @@ use strict;
 use warnings;
 use base qw( Device::Chip::Adapter );
 
+our $VERSION = '0.14';
+
 use Device::FTDI qw( PID_FT232H );
 
 =head1 NAME

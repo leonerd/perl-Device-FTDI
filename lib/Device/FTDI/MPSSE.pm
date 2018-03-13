@@ -9,7 +9,7 @@ use strict;
 use warnings;
 use 5.010; # //
 
-our $VERSION = '0.13';
+our $VERSION = '0.14';
 
 # Testing on my FT232H board suggests that the MPSSE gets upset and stalls if
 #   you write more than 1024 bytes at once.
