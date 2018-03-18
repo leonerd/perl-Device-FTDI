@@ -535,6 +535,53 @@ sub set_bitmode {
     return $self->_check( _set_bitmode( $self->{_ctx}, $mask, $mode ) );
 }
 
+=head2 set_dtr
+
+    $dev->set_dtr($dtr)
+
+Assert/deassert the C<DTR> handshaking line. As the IO pin itself is
+active-low, a true value for C<$dtr> will assert the line, i.e. make it low;
+a false value will make it high.
+
+=cut
+
+sub set_dtr {
+    my $self = shift;
+    my ( $dtr ) = @_;
+    return $self->_check( _setdtr( $self->{_ctx}, $dtr ) );
+}
+
+=head2 set_rts
+
+    $dev->set_rts($rts)
+
+Assert/deassert the C<RTS> handshaking line. As the IO pin itself is
+active-low, a true value for C<$rts> will assert the line, i.e. make it low;
+a false value will make it high.
+
+=cut
+
+sub set_rts {
+    my $self = shift;
+    my ( $rts ) = @_;
+    return $self->_check( _setrts( $self->{_ctx}, $rts ) );
+}
+
+=head2 set_dtrrts
+
+    $dev->set_dtrrts($dtr, $rts)
+
+Equivalent to calling L</set_dtr> and L</set_rts> except that both line
+changes occur at the same time.
+
+=cut
+
+sub set_dtrrts {
+    my $self = shift;
+    my ( $dtr, $rts ) = @_;
+    return $self->_check( _setdtr_rts( $self->{_ctx}, $dtr, $rts ) );
+}
+
 sub DESTROY {
     my $self = shift;
     _close_device($self->{_ctx});

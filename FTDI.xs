@@ -345,3 +345,28 @@ dftdi_set_bitmode(ftdi, mask, mode)
         RETVAL = ftdi_set_bitmode(ftdi, mask, mode);
     OUTPUT:
         RETVAL
+
+int
+dftdi_setdtr_rts(ftdi, dtr, rts)
+	struct ftdi_context *ftdi
+	bool dtr
+	bool rts
+    CODE:
+	RETVAL = ftdi_setdtr_rts(ftdi, dtr, rts);
+    OUTPUT:
+	RETVAL
+
+int
+dftdi_setdtr(ftdi, state)
+	struct ftdi_context *ftdi
+	bool state
+    ALIAS:
+	_setdtr = 1
+	_setrts = 2
+    CODE:
+	switch(ix) {
+	    case 1: RETVAL = ftdi_setdtr(ftdi, state); break;
+	    case 2: RETVAL = ftdi_setrts(ftdi, state); break;
+	}
+    OUTPUT:
+	RETVAL
